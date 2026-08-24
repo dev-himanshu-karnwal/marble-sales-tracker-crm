@@ -22,10 +22,10 @@ import type {
 } from '../data/types';
 
 const KEYS = {
-  user: 'dct-crm-user',
-  architects: 'dct-crm-architects',
-  visits: 'dct-crm-visits',
-  salespeople: 'dct-crm-salespeople',
+  user: 'Jindal-crm-user',
+  architects: 'Jindal-crm-architects',
+  visits: 'Jindal-crm-visits',
+  salespeople: 'Jindal-crm-salespeople',
 } as const;
 
 function loadJson<T>(key: string, fallback: T): T {
@@ -154,11 +154,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const fromLocal = loadJson<SessionUser | null>(KEYS.user, null);
     if (fromLocal) return fromLocal;
     try {
-      const legacy = sessionStorage.getItem('dct-crm-user');
+      const legacy = sessionStorage.getItem('Jindal-crm-user');
       if (legacy) {
         const parsed = JSON.parse(legacy) as SessionUser;
         saveJson(KEYS.user, parsed);
-        sessionStorage.removeItem('dct-crm-user');
+        sessionStorage.removeItem('Jindal-crm-user');
         return parsed;
       }
     } catch {
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
     if (u) saveJson(KEYS.user, u);
     else localStorage.removeItem(KEYS.user);
-    sessionStorage.removeItem('dct-crm-user');
+    sessionStorage.removeItem('Jindal-crm-user');
   };
 
   const loginAdmin = () => persist({ role: 'admin' });

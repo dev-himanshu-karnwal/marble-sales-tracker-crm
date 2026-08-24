@@ -19,7 +19,7 @@ export default function VisitSummaryCard({
 
   const handleShare = async () => {
     const text = [
-      `DCT Marble — Visit summary`,
+      `Jindal Marble — Visit summary`,
       architect ? `${architect.name} · ${architect.siteName}` : '',
       `Outcome: ${visit.outcome}`,
       visit.marbleDiscussed ? `Marble: ${visit.marbleDiscussed}` : '',

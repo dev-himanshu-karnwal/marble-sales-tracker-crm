@@ -39,7 +39,7 @@ export default function LoginPage() {
           style={{ backgroundImage: `linear-gradient(160deg, rgba(42, 38, 34, 0.88), rgba(42, 38, 34, 0.55)), url(${heroImg})` }}
         >
           <div>
-            <div className="brand">DCT Marble</div>
+            <div className="brand">Jindal Marble</div>
             <p>
               Field sales CRM for architects, site visits, and marble leads —
               sample workspace with representative field data.

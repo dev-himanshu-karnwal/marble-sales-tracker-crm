@@ -60,7 +60,7 @@ export default function AppLayout() {
       />
       <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="mark">DCT Marble</div>
+          <div className="mark">Jindal Marble</div>
           <div className="sub">Field Sales CRM</div>
         </div>
 

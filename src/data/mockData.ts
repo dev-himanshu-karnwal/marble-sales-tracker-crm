@@ -4,7 +4,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-1',
     name: 'Arjun Mehta',
-    email: 'arjun.mehta@dctmarble.in',
+    email: 'arjun.mehta@Jindalmarble.in',
     phone: '+91 98100 11223',
     region: 'Delhi NCR',
     avatarInitials: 'AM',
@@ -18,7 +18,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-2',
     name: 'Priya Sharma',
-    email: 'priya.sharma@dctmarble.in',
+    email: 'priya.sharma@Jindalmarble.in',
     phone: '+91 98290 44556',
     region: 'Jaipur',
     avatarInitials: 'PS',
@@ -32,7 +32,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-3',
     name: 'Rohan Kapoor',
-    email: 'rohan.kapoor@dctmarble.in',
+    email: 'rohan.kapoor@Jindalmarble.in',
     phone: '+91 98765 33445',
     region: 'Mumbai',
     avatarInitials: 'RK',
@@ -46,7 +46,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-4',
     name: 'Ananya Singh',
-    email: 'ananya.singh@dctmarble.in',
+    email: 'ananya.singh@Jindalmarble.in',
     phone: '+91 94140 77889',
     region: 'Kishangarh',
     avatarInitials: 'AS',
@@ -60,7 +60,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-5',
     name: 'Vikram Patel',
-    email: 'vikram.patel@dctmarble.in',
+    email: 'vikram.patel@Jindalmarble.in',
     phone: '+91 98250 22334',
     region: 'Ahmedabad',
     avatarInitials: 'VP',
@@ -74,7 +74,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-6',
     name: 'Neha Gupta',
-    email: 'neha.gupta@dctmarble.in',
+    email: 'neha.gupta@Jindalmarble.in',
     phone: '+91 98711 55667',
     region: 'Delhi NCR',
     avatarInitials: 'NG',
@@ -88,7 +88,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-7',
     name: 'Suresh Yadav',
-    email: 'suresh.yadav@dctmarble.in',
+    email: 'suresh.yadav@Jindalmarble.in',
     phone: '+91 94133 88990',
     region: 'Jaipur',
     avatarInitials: 'SY',
@@ -516,7 +516,7 @@ export const visits: Visit[] = [
   { id: 'v-7', architectId: 'arch-10', salespersonId: 'sp-1', date: '2026-08-05T16:30:00', outcome: 'Interested', notes: 'Site walkthrough — green marble for spa wet areas.', marbleDiscussed: 'Indian Green Marble' },
   { id: 'v-8', architectId: 'arch-1', salespersonId: 'sp-1', date: '2026-07-28T11:15:00', outcome: 'Follow-up Needed', notes: 'Discussed thickness options for outdoor cladding.', marbleDiscussed: 'Italian Statuario' },
   { id: 'v-9', architectId: 'arch-19', salespersonId: 'sp-1', date: '2026-07-20T13:00:00', outcome: 'No Response', notes: 'Scheduled meeting; architect was off-site.', marbleDiscussed: 'Italian Statuario' },
-  { id: 'v-10', architectId: 'arch-7', salespersonId: 'sp-1', date: '2026-07-12T09:30:00', outcome: 'Sample Given', notes: 'Initial slab selection day at DCT yard.', marbleDiscussed: 'Calacatta Gold' },
+  { id: 'v-10', architectId: 'arch-7', salespersonId: 'sp-1', date: '2026-07-12T09:30:00', outcome: 'Sample Given', notes: 'Initial slab selection day at Jindal yard.', marbleDiscussed: 'Calacatta Gold' },
 
   // Priya Sharma (sp-2) — top performer
   { id: 'v-11', architectId: 'arch-2', salespersonId: 'sp-2', date: '2026-08-23T10:00:00', outcome: 'Lead Generated', notes: 'Final Makrana White selection for hotel lobby counters signed off.', marbleDiscussed: 'Makrana White' },
@@ -549,7 +549,7 @@ export const visits: Visit[] = [
   { id: 'v-34', architectId: 'arch-22', salespersonId: 'sp-4', date: '2026-08-15T09:20:00', outcome: 'Follow-up Needed', notes: 'Guest house — need Pushkar Road access timing for delivery.', marbleDiscussed: 'Makrana White' },
   { id: 'v-35', architectId: 'arch-4', salespersonId: 'sp-4', date: '2026-08-11T15:00:00', outcome: 'Sample Given', notes: 'Left Rajnagar polished vs honed boards.', marbleDiscussed: 'Rajnagar Marble' },
   { id: 'v-36', architectId: 'arch-11', salespersonId: 'sp-4', date: '2026-08-06T11:30:00', outcome: 'Lead Generated', notes: 'Facade contract intent — 1,800 sq ft Makrana.', marbleDiscussed: 'Makrana White' },
-  { id: 'v-37', architectId: 'arch-17', salespersonId: 'sp-4', date: '2026-07-30T10:00:00', outcome: 'Interested', notes: 'Owner visited DCT yard in Kishangarh.', marbleDiscussed: 'Indian Green Marble' },
+  { id: 'v-37', architectId: 'arch-17', salespersonId: 'sp-4', date: '2026-07-30T10:00:00', outcome: 'Interested', notes: 'Owner visited Jindal yard in Kishangarh.', marbleDiscussed: 'Indian Green Marble' },
   { id: 'v-38', architectId: 'arch-22', salespersonId: 'sp-4', date: '2026-07-21T14:50:00', outcome: 'No Response', notes: 'Site closed for festival; reschedule.', marbleDiscussed: 'Makrana White' },
 
   // Vikram Patel (sp-5) — mid
