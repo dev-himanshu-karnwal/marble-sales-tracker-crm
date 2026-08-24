@@ -1,0 +1,60 @@
+import { useData } from '../../context/AppContext';
+import { badgeClass, getAllLeaderboard } from '../../data/helpers';
+
+export default function LeaderboardPage() {
+  const { architects, visits } = useData();
+  const board = getAllLeaderboard(architects, visits);
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">Admin</div>
+          <h1>Salesperson Leaderboard</h1>
+          <p>
+            Ranked by leads generated and conversion rate. Performance badges
+            highlight top performers and those needing coaching.
+          </p>
+        </div>
+      </div>
+
+      <div className="leaderboard-list">
+        {board.map((row, idx) => (
+          <div
+            key={row.salesperson.id}
+            className={`leader-card ${idx === 0 ? 'rank-1' : ''}`}
+          >
+            <div className="rank-num">{idx + 1}</div>
+            <div className="leader-meta">
+              <h3>
+                {row.salesperson.name}
+                <span className={`badge ${badgeClass(row.badge)}`}>
+                  {row.badge}
+                </span>
+              </h3>
+              <div className="region">{row.salesperson.region}</div>
+            </div>
+            <div className="leader-stats">
+              <div className="s">
+                <div className="v">{row.architectsRegistered}</div>
+                <div className="l">Architects</div>
+              </div>
+              <div className="s">
+                <div className="v">{row.visitsThisMonth}</div>
+                <div className="l">Visits / mo</div>
+              </div>
+              <div className="s">
+                <div className="v">{row.leadsGenerated}</div>
+                <div className="l">Leads</div>
+              </div>
+              <div className="s">
+                <div className="v">{row.conversionRate}%</div>
+                <div className="l">Conversion</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
