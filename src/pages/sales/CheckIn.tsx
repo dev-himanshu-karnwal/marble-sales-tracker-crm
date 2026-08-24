@@ -1,51 +1,104 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle2, MapPin, Loader2 } from 'lucide-react';
+import { Building2, CheckCircle2, Loader2, MapPin } from 'lucide-react';
 import { useAuth, useData } from '../../context/AppContext';
+import EmptyState from '../../components/EmptyState';
 
 export default function CheckInPage() {
-  const { id } = useParams();
-  const { architects, recordCheckIn } = useData();
+  const { type, id } = useParams<{ type: string; id: string }>();
+  const { architects, sites, recordCheckIn } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const arch = architects.find(
-    (a) => a.id === id && a.salespersonId === user?.salespersonId
-  );
+
+  const isOffice = type === 'office';
+  const isSite = type === 'site';
+
+  const site = isSite ? sites.find((s) => s.id === id) : undefined;
+  const arch = isOffice
+    ? architects.find((a) => a.id === id)
+    : site
+      ? architects.find((a) => a.id === site.architectId)
+      : undefined;
+
+  const assigned =
+    arch && user?.salespersonId && arch.salespersonId === user.salespersonId;
+
+  const lat = isOffice ? arch?.officeLat : site?.lat;
+  const lng = isOffice ? arch?.officeLng : site?.lng;
+  const label = isOffice
+    ? arch
+      ? `${arch.firm} (office)`
+      : 'Office'
+    : site?.name ?? 'Site';
+  const address = isOffice ? arch?.address : site?.address;
 
   const [phase, setPhase] = useState<'locating' | 'success'>('locating');
 
   useEffect(() => {
-    if (!arch || !user?.salespersonId) return;
+    if (!assigned || lat == null || lng == null || !user?.salespersonId) return;
     const t = setTimeout(() => {
       recordCheckIn(user.salespersonId!, {
-        lat: arch.lat,
-        lng: arch.lng,
-        label: arch.siteName,
+        lat,
+        lng,
+        label,
         date: new Date().toISOString(),
+        checkInType: isOffice ? 'office' : 'site',
+        architectId: arch!.id,
+        siteId: site?.id,
       });
       setPhase('success');
     }, 1600);
     return () => clearTimeout(t);
-  }, [arch, user?.salespersonId, recordCheckIn]);
+  }, [
+    assigned,
+    lat,
+    lng,
+    label,
+    user?.salespersonId,
+    recordCheckIn,
+    isOffice,
+    arch,
+    site?.id,
+  ]);
 
-  if (!arch) {
+  if (!isOffice && !isSite) {
     return (
-      <div className="empty-state empty-state-rich">
-        <h3>Site not found</h3>
-        <p>This architect is not assigned to you, or the link is invalid.</p>
-        <Link to="/sales" className="btn btn-secondary btn-sm">
-          Back to my architects
-        </Link>
-      </div>
+      <EmptyState
+        title="Invalid check-in"
+        description="Choose a referred project site or an architect office."
+        actionLabel="My architects"
+        actionTo="/sales"
+      />
     );
   }
+
+  if (!assigned || !arch || lat == null || lng == null) {
+    return (
+      <EmptyState
+        title="Location not available"
+        description={
+          isOffice
+            ? 'This architect has no office pin, or is not assigned to you.'
+            : 'Site not found or not assigned to you.'
+        }
+        actionLabel="My architects"
+        actionTo="/sales"
+      />
+    );
+  }
+
+  const visitPath = isOffice
+    ? `/sales/visit/office/${arch.id}`
+    : `/sales/visit/site/${site!.id}`;
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <div className="eyebrow">Check-in</div>
-          <h1>{arch.siteName}</h1>
+          <div className="eyebrow">
+            Check-in · {isOffice ? 'Architect office' : 'Project site'}
+          </div>
+          <h1>{label}</h1>
           <p>
             {arch.name} · {arch.firm}
           </p>
@@ -65,8 +118,8 @@ export default function CheckInPage() {
           <>
             <h2>Verifying location…</h2>
             <p style={{ color: 'var(--ink-soft)' }}>
-              Confirming proximity to site coordinates ({arch.lat.toFixed(4)},{' '}
-              {arch.lng.toFixed(4)}).
+              Confirming proximity to {isOffice ? 'studio' : 'site'} coordinates
+              ({lat.toFixed(4)}, {lng.toFixed(4)}).
             </p>
           </>
         ) : (
@@ -76,23 +129,31 @@ export default function CheckInPage() {
               <div>
                 <strong>Check-in successful</strong>
                 <div style={{ fontSize: '0.85rem' }}>
-                  You are marked present at this site. Your map pin is updated.
+                  Marked present at this {isOffice ? 'office' : 'project site'}.
+                  Your map pin is updated.
                 </div>
               </div>
             </div>
             <h2>Ready to log the visit</h2>
             <p style={{ color: 'var(--ink-soft)', marginBottom: '1.25rem' }}>
-              <MapPin
-                size={14}
-                style={{ verticalAlign: -2, marginRight: 4 }}
-              />
-              {arch.address}
+              {isOffice ? (
+                <Building2
+                  size={14}
+                  style={{ verticalAlign: -2, marginRight: 4 }}
+                />
+              ) : (
+                <MapPin
+                  size={14}
+                  style={{ verticalAlign: -2, marginRight: 4 }}
+                />
+              )}
+              {address}
             </p>
             <div className="actions-row">
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => navigate(`/sales/visit/${arch.id}`)}
+                onClick={() => navigate(visitPath)}
               >
                 Continue to visit log
               </button>

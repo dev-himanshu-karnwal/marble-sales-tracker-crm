@@ -3,8 +3,8 @@ import { useData } from '../../context/AppContext';
 import { badgeClass, getAllLeaderboard } from '../../data/helpers';
 
 export default function LeaderboardPage() {
-  const { architects, visits, salespeople } = useData();
-  const board = getAllLeaderboard(architects, visits, salespeople);
+  const { architects, visits, salespeople, sites } = useData();
+  const board = getAllLeaderboard(architects, visits, salespeople, sites);
 
   return (
     <div>
@@ -54,6 +54,10 @@ export default function LeaderboardPage() {
               <div className="s">
                 <div className="v">{row.architectsRegistered}</div>
                 <div className="l">Architects</div>
+              </div>
+              <div className="s">
+                <div className="v">{row.sitesReferred}</div>
+                <div className="l">Sites</div>
               </div>
               <div className="s">
                 <div className="v">{row.visitsThisMonth}</div>

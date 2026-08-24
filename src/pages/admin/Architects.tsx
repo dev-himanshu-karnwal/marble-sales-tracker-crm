@@ -2,11 +2,16 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useData } from '../../context/AppContext';
 import EmptyState from '../../components/EmptyState';
-import { getSalesperson, leadStatusClass } from '../../data/helpers';
+import {
+  architectLeadStatus,
+  getSalesperson,
+  getSitesForArchitect,
+  leadStatusClass,
+} from '../../data/helpers';
 import { REGIONS } from '../../data/mockData';
 
 export default function ArchitectsPage() {
-  const { architects, salespeople } = useData();
+  const { architects, sites, salespeople } = useData();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState('');
@@ -26,16 +31,20 @@ export default function ArchitectsPage() {
     return architects.filter((a) => {
       if (spId !== 'all' && a.salespersonId !== spId) return false;
       if (region !== 'all' && a.region !== region) return false;
-      if (status !== 'all' && a.leadStatus !== status) return false;
+      const lead = architectLeadStatus(a.id, sites);
+      if (status !== 'all' && lead !== status) return false;
       if (!query) return true;
+      const siteNames = getSitesForArchitect(a.id, sites)
+        .map((s) => s.name)
+        .join(' ');
       return (
         a.name.toLowerCase().includes(query) ||
         a.firm.toLowerCase().includes(query) ||
-        a.siteName.toLowerCase().includes(query) ||
+        siteNames.toLowerCase().includes(query) ||
         a.preferredMarble?.toLowerCase().includes(query)
       );
     });
-  }, [architects, q, region, status, spId]);
+  }, [architects, sites, q, region, status, spId]);
 
   const filterSp = spId !== 'all' ? getSalesperson(spId, salespeople) : null;
 
@@ -44,9 +53,10 @@ export default function ArchitectsPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">Admin</div>
-          <h1>All Architects</h1>
+          <h1>Architects</h1>
           <p>
-            Search and filter registered architecture firms and project sites.
+            Studios and contacts. Each may have multiple referred project sites
+            for marble.
             {filterSp && (
               <>
                 {' '}
@@ -60,7 +70,7 @@ export default function ArchitectsPage() {
       <div className="search-bar">
         <input
           type="search"
-          placeholder="Search name, firm, site, marble…"
+          placeholder="Search name, firm, referred sites…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -99,44 +109,58 @@ export default function ArchitectsPage() {
             <tr>
               <th>Architect</th>
               <th>Firm</th>
-              <th>Site / Project</th>
+              <th>Referred sites</th>
               <th>Region</th>
               <th>Salesperson</th>
               <th>Lead</th>
-              <th>Marble</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((a) => (
-              <tr
-                key={a.id}
-                className="clickable"
-                onClick={() => navigate(`/admin/architects/${a.id}`)}
-              >
-                <td>
-                  <strong>{a.name}</strong>
-                </td>
-                <td>{a.firm}</td>
-                <td>{a.siteName}</td>
-                <td>{a.region}</td>
-                <td>{getSalesperson(a.salespersonId, salespeople)?.name ?? '—'}</td>
-                <td>
-                  <span className={`badge ${leadStatusClass(a.leadStatus)}`}>
-                    {a.leadStatus}
-                  </span>
-                </td>
-                <td>{a.preferredMarble ?? '—'}</td>
-              </tr>
-            ))}
+            {filtered.map((a) => {
+              const referred = getSitesForArchitect(a.id, sites);
+              const lead = architectLeadStatus(a.id, sites);
+              return (
+                <tr
+                  key={a.id}
+                  className="clickable"
+                  onClick={() => navigate(`/admin/architects/${a.id}`)}
+                >
+                  <td>
+                    <strong>{a.name}</strong>
+                  </td>
+                  <td>{a.firm}</td>
+                  <td>
+                    {referred.length === 0
+                      ? '—'
+                      : referred.length === 1
+                        ? referred[0].name
+                        : `${referred.length} sites`}
+                  </td>
+                  <td>{a.region}</td>
+                  <td>
+                    {getSalesperson(a.salespersonId, salespeople)?.name ?? '—'}
+                  </td>
+                  <td>
+                    <span className={`badge ${leadStatusClass(lead)}`}>
+                      {lead}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={6}>
                   <EmptyState
                     title="No architects match filters"
                     description="Try a different region, lead status, or salesperson."
-                    actionLabel={spId !== 'all' ? 'Clear salesperson filter' : undefined}
+                    actionLabel={
+                      spId !== 'all' ? 'Clear salesperson filter' : undefined
+                    }
                     onAction={
-                      spId !== 'all' ? () => setSalespersonFilter('all') : undefined
+                      spId !== 'all'
+                        ? () => setSalespersonFilter('all')
+                        : undefined
                     }
                   />
                 </td>

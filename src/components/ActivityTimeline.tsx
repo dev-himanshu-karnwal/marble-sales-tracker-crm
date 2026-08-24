@@ -17,9 +17,16 @@ import {
   outcomeClass,
   referenceDate,
   todayISODate,
+  visitLocationLabel,
 } from '../data/helpers';
 import { VISIT_OUTCOMES } from '../data/mockData';
-import type { Architect, Salesperson, Visit, VisitOutcome } from '../data/types';
+import type {
+  Architect,
+  Salesperson,
+  Site,
+  Visit,
+  VisitOutcome,
+} from '../data/types';
 
 type ViewMode = 'timeline' | 'list' | 'calendar';
 
@@ -32,6 +39,7 @@ interface ActivityItem {
   visit: Visit;
   architect?: Architect;
   salesperson?: Salesperson;
+  place: string;
 }
 
 function toDay(iso: string): string {
@@ -41,13 +49,15 @@ function toDay(iso: string): string {
 function buildActivities(
   visits: Visit[],
   architects: Architect[],
-  salespeople: Salesperson[]
+  salespeople: Salesperson[],
+  sites: Site[]
 ): ActivityItem[] {
   const items: ActivityItem[] = [];
 
   for (const visit of visits) {
     const architect = getArchitect(visit.architectId, architects);
     const salesperson = getSalesperson(visit.salespersonId, salespeople);
+    const place = visitLocationLabel(visit, sites, architects);
     items.push({
       id: `visit-${visit.id}`,
       kind: 'visit',
@@ -56,6 +66,7 @@ function buildActivities(
       visit,
       architect,
       salesperson,
+      place,
     });
     if (visit.nextFollowUp) {
       items.push({
@@ -66,6 +77,7 @@ function buildActivities(
         visit,
         architect,
         salesperson,
+        place,
       });
     }
   }
@@ -92,7 +104,7 @@ function startWeekday(year: number, month: number): number {
 
 export default function ActivityTimeline() {
   const { user } = useAuth();
-  const { visits, architects, salespeople } = useData();
+  const { visits, architects, salespeople, sites } = useData();
   const isSales = user?.role === 'salesperson';
 
   const [view, setView] = useState<ViewMode>('timeline');
@@ -116,8 +128,8 @@ export default function ActivityTimeline() {
   }, [visits, isSales, user?.salespersonId]);
 
   const allItems = useMemo(
-    () => buildActivities(scopedVisits, architects, salespeople),
-    [scopedVisits, architects, salespeople]
+    () => buildActivities(scopedVisits, architects, salespeople, sites),
+    [scopedVisits, architects, salespeople, sites]
   );
 
   const filtered = useMemo(() => {
@@ -132,7 +144,7 @@ export default function ActivityTimeline() {
       return (
         item.architect?.name.toLowerCase().includes(query) ||
         item.architect?.firm.toLowerCase().includes(query) ||
-        item.architect?.siteName.toLowerCase().includes(query) ||
+        item.place.toLowerCase().includes(query) ||
         item.salesperson?.name.toLowerCase().includes(query) ||
         item.visit.notes.toLowerCase().includes(query) ||
         item.visit.marbleDiscussed?.toLowerCase().includes(query) ||
@@ -297,7 +309,8 @@ export default function ActivityTimeline() {
                   <tr>
                     <th>When</th>
                     <th>Type</th>
-                    <th>Architect / Site</th>
+                    <th>Architect</th>
+                    <th>Where</th>
                     {!isSales && <th>Salesperson</th>}
                     <th>Outcome</th>
                     <th>Marble</th>
@@ -329,13 +342,27 @@ export default function ActivityTimeline() {
                         ) : (
                           <strong>—</strong>
                         )}
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            item.visit.checkInType === 'office'
+                              ? 'badge-muted'
+                              : 'badge-info'
+                          }`}
+                        >
+                          {item.visit.checkInType === 'office'
+                            ? 'Office'
+                            : 'Site'}
+                        </span>
                         <div
                           style={{
                             fontSize: '0.75rem',
                             color: 'var(--ink-muted)',
+                            marginTop: 4,
                           }}
                         >
-                          {item.architect?.siteName}
+                          {item.place}
                         </div>
                       </td>
                       {!isSales && <td>{item.salesperson?.name ?? '—'}</td>}
@@ -525,9 +552,7 @@ function ActivityTimelineRow({
           ) : (
             'Unknown architect'
           )}
-          {item.architect?.siteName && (
-            <span className="activity-item-site"> · {item.architect.siteName}</span>
-          )}
+          <span className="activity-item-site"> · {item.place}</span>
         </div>
         {showSalesperson && item.salesperson && (
           <div className="activity-item-meta">{item.salesperson.name}</div>

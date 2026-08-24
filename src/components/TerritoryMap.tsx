@@ -52,22 +52,34 @@ const REGION_FOCUS: Record<
   Ahmedabad: { center: [23.03, 72.57], zoom: 11 },
 };
 
-type LayerFilter = 'all' | 'architects' | 'checkins';
+type LayerFilter = 'all' | 'sites' | 'offices' | 'checkins';
 
 type MapPinItem =
   | {
-      kind: 'architect';
+      kind: 'site';
       id: string;
+      siteId: string;
+      architectId: string;
       lat: number;
       lng: number;
       name: string;
       subtitle: string;
-      site: string;
       region: string;
       lastVisit?: string;
       salesperson: string;
       leadStatus: LeadStatus;
       needsFollowUp: boolean;
+    }
+  | {
+      kind: 'office';
+      id: string;
+      architectId: string;
+      lat: number;
+      lng: number;
+      name: string;
+      subtitle: string;
+      region: string;
+      salesperson: string;
     }
   | {
       kind: 'checkin';
@@ -89,8 +101,9 @@ interface TerritoryMapProps {
   salespersonId?: string;
 }
 
-function createPinIcon(kind: 'architect' | 'checkin', active: boolean) {
-  const color = kind === 'architect' ? '#b08d57' : '#3d5a73';
+function createPinIcon(kind: 'site' | 'office' | 'checkin', active: boolean) {
+  const color =
+    kind === 'site' ? '#b08d57' : kind === 'office' ? '#5c4a3a' : '#3d5a73';
   const size = active ? 36 : 28;
   return L.divIcon({
     className: 'crm-map-marker',
@@ -98,7 +111,7 @@ function createPinIcon(kind: 'architect' | 'checkin', active: boolean) {
     iconAnchor: [size / 2, size + 4],
     popupAnchor: [0, -(size + 2)],
     html: `
-      <div class="crm-pin ${kind} ${active ? 'is-active' : ''}" style="--pin:${color}">
+      <div class="crm-pin ${kind === 'site' ? 'architect' : kind} ${active ? 'is-active' : ''}" style="--pin:${color}">
         <span class="crm-pin-head"></span>
         <span class="crm-pin-shadow"></span>
       </div>
@@ -154,7 +167,7 @@ function MapController({
 }
 
 export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps) {
-  const { architects, visits, salespeople } = useData();
+  const { architects, sites, visits, salespeople } = useData();
   const isSales = mode === 'salesperson';
   const me =
     isSales && salespersonId
@@ -207,6 +220,16 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
     return architects;
   }, [architects, isSales, salespersonId]);
 
+  const archIds = useMemo(
+    () => new Set(scopedArchitects.map((a) => a.id)),
+    [scopedArchitects]
+  );
+
+  const scopedSites = useMemo(
+    () => sites.filter((s) => archIds.has(s.architectId)),
+    [sites, archIds]
+  );
+
   const scopedVisits = useMemo(() => {
     if (isSales && salespersonId) {
       return visits.filter((v) => v.salespersonId === salespersonId);
@@ -223,16 +246,20 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
 
   const insights = useMemo(() => {
     if (!isSales || !salespersonId || !me) return null;
-    const stats = computeSalespersonStats(me, scopedArchitects, scopedVisits);
-    const hotSites = scopedArchitects.filter((a) => a.leadStatus === 'Hot').length;
+    const stats = computeSalespersonStats(
+      me,
+      scopedArchitects,
+      scopedVisits,
+      scopedSites
+    );
+    const hotSites = scopedSites.filter((s) => s.leadStatus === 'Hot').length;
     const followUps = scopedVisits.filter(
       (v) =>
-        v.outcome === 'Follow-up Needed' ||
-        isFollowUpDue(v.nextFollowUp)
+        v.outcome === 'Follow-up Needed' || isFollowUpDue(v.nextFollowUp)
     ).length;
     const visitsThisMonth = scopedVisits.filter((v) => isThisMonth(v.date)).length;
     return {
-      sites: scopedArchitects.length,
+      sites: scopedSites.length,
       visitsThisMonth,
       leads: stats.leadsGenerated,
       conversion: stats.conversionRate,
@@ -242,32 +269,49 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
       badge: stats.badge,
       region: me.region,
     };
-  }, [isSales, salespersonId, me, scopedArchitects, scopedVisits]);
+  }, [isSales, salespersonId, me, scopedArchitects, scopedVisits, scopedSites]);
 
   const pins = useMemo<MapPinItem[]>(() => {
-    const archPins: MapPinItem[] = scopedArchitects.map((a) => {
+    const sitePins: MapPinItem[] = scopedSites.map((s) => {
+      const arch = scopedArchitects.find((a) => a.id === s.architectId);
       const myVisits = scopedVisits
-        .filter((v) => v.architectId === a.id)
+        .filter((v) => v.siteId === s.id)
         .sort((x, y) => y.date.localeCompare(x.date));
       const last = myVisits[0];
       const needsFollowUp =
         last?.outcome === 'Follow-up Needed' ||
         isFollowUpDue(last?.nextFollowUp);
       return {
-        kind: 'architect',
-        id: a.id,
-        lat: a.lat,
-        lng: a.lng,
-        name: a.name,
-        subtitle: a.firm,
-        site: a.siteName,
-        region: a.region,
+        kind: 'site' as const,
+        id: s.id,
+        siteId: s.id,
+        architectId: s.architectId,
+        lat: s.lat,
+        lng: s.lng,
+        name: s.name,
+        subtitle: arch ? `${arch.name} · ${arch.firm}` : 'Referred site',
+        region: s.region,
         lastVisit: last?.date,
-        salesperson: getSalesperson(a.salespersonId, salespeople)?.name ?? '—',
-        leadStatus: a.leadStatus,
+        salesperson:
+          getSalesperson(arch?.salespersonId ?? '', salespeople)?.name ?? '—',
+        leadStatus: s.leadStatus,
         needsFollowUp,
       };
     });
+
+    const officePins: MapPinItem[] = scopedArchitects
+      .filter((a) => a.officeLat != null && a.officeLng != null)
+      .map((a) => ({
+        kind: 'office' as const,
+        id: `office-${a.id}`,
+        architectId: a.id,
+        lat: a.officeLat!,
+        lng: a.officeLng!,
+        name: `${a.firm} (office)`,
+        subtitle: a.name,
+        region: a.region,
+        salesperson: getSalesperson(a.salespersonId, salespeople)?.name ?? '—',
+      }));
 
     const checkPins: MapPinItem[] = scopedSalespeople
       .filter((s) => s.lastCheckIn)
@@ -287,17 +331,25 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
         };
       });
 
-    return [...archPins, ...checkPins];
-  }, [scopedArchitects, scopedVisits, scopedSalespeople, isSales, salespeople]);
+    return [...sitePins, ...officePins, ...checkPins];
+  }, [
+    scopedSites,
+    scopedArchitects,
+    scopedVisits,
+    scopedSalespeople,
+    isSales,
+    salespeople,
+  ]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return pins.filter((p) => {
-      if (layer === 'architects' && p.kind !== 'architect') return false;
+      if (layer === 'sites' && p.kind !== 'site') return false;
+      if (layer === 'offices' && p.kind !== 'office') return false;
       if (layer === 'checkins' && p.kind !== 'checkin') return false;
       if (!isSales && region !== 'all' && p.region !== region) return false;
       if (isSales && leadFilter !== 'all') {
-        if (p.kind === 'checkin') return false;
+        if (p.kind !== 'site') return false;
         if (leadFilter === 'followup' && !p.needsFollowUp) return false;
         if (leadFilter !== 'followup' && p.leadStatus !== leadFilter) return false;
       }
@@ -306,9 +358,9 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
         p.name,
         p.subtitle,
         p.region,
-        p.kind === 'architect' ? p.site : p.label,
+        p.kind === 'checkin' ? p.label : '',
         p.salesperson,
-        p.kind === 'architect' ? p.leadStatus : '',
+        p.kind === 'site' ? p.leadStatus : '',
       ]
         .join(' ')
         .toLowerCase();
@@ -381,8 +433,8 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
           <h1>{isSales ? 'My Territory Map' : 'Territory Map'}</h1>
           <p>
             {isSales
-              ? `Your architects, check-ins, and follow-ups across ${me?.region ?? 'your region'}. Pan, zoom, and tap a pin to act.`
-              : 'Interactive field map — pan, zoom, search, and filter architect sites vs. salesperson check-ins.'}
+              ? `Your referred sites, offices, and check-ins across ${me?.region ?? 'your region'}. Pan, zoom, and tap a pin to act.`
+              : 'Interactive field map — referred project sites, architect offices, and salesperson check-ins.'}
           </p>
         </div>
         <div className="actions-row">
@@ -466,7 +518,8 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
           {(
             [
               ['all', 'All layers'],
-              ['architects', isSales ? 'My sites' : 'Architects'],
+              ['sites', 'Project sites'],
+              ['offices', 'Offices'],
               ['checkins', isSales ? 'My check-in' : 'Check-ins'],
             ] as const
           ).map(([value, label]) => (
@@ -530,7 +583,8 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
           <div className="map-sidebar-head">
             <strong>{filtered.length}</strong> locations
             <span>
-              {filtered.filter((p) => p.kind === 'architect').length} sites ·{' '}
+              {filtered.filter((p) => p.kind === 'site').length} sites ·{' '}
+              {filtered.filter((p) => p.kind === 'office').length} offices ·{' '}
               {filtered.filter((p) => p.kind === 'checkin').length} check-in
               {filtered.filter((p) => p.kind === 'checkin').length === 1 ? '' : 's'}
             </span>
@@ -550,8 +604,10 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                 className={`map-list-item ${selectedId === pin.id ? 'active' : ''}`}
                 onClick={() => selectPin(pin, 13)}
               >
-                <span className={`map-list-icon ${pin.kind}`}>
-                  {pin.kind === 'architect' ? (
+                <span className={`map-list-icon ${pin.kind === 'site' ? 'architect' : pin.kind}`}>
+                  {pin.kind === 'site' ? (
+                    <MapPin size={14} />
+                  ) : pin.kind === 'office' ? (
                     <Building2 size={14} />
                   ) : (
                     <UserRound size={14} />
@@ -559,13 +615,13 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                 </span>
                 <span className="map-list-body">
                   <span className="map-list-title">{pin.name}</span>
-                  <span className="map-list-sub">
-                    {pin.kind === 'architect' ? pin.site : pin.label}
-                  </span>
+                  <span className="map-list-sub">{pin.subtitle}</span>
                   <span className="map-list-meta">
-                    {pin.kind === 'architect'
+                    {pin.kind === 'site'
                       ? `${pin.leadStatus}${pin.needsFollowUp ? ' · Follow-up' : ''}`
-                      : pin.region}
+                      : pin.kind === 'office'
+                        ? 'Architect office'
+                        : pin.region}
                   </span>
                 </span>
               </button>
@@ -649,9 +705,13 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                 <Popup className="crm-map-popup" maxWidth={280}>
                   <div className="map-popup-card">
                     <div className="map-popup-kicker">
-                      {pin.kind === 'architect' ? (
+                      {pin.kind === 'site' ? (
                         <>
-                          <MapPin size={12} /> Architect site
+                          <MapPin size={12} /> Project site
+                        </>
+                      ) : pin.kind === 'office' ? (
+                        <>
+                          <Building2 size={12} /> Architect office
                         </>
                       ) : (
                         <>
@@ -662,9 +722,8 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                     </div>
                     <h4>{pin.name}</h4>
                     <p className="map-popup-firm">{pin.subtitle}</p>
-                    {pin.kind === 'architect' ? (
+                    {pin.kind === 'site' && (
                       <>
-                        <p>{pin.site}</p>
                         <p>
                           Last visit:{' '}
                           {pin.lastVisit ? formatDate(pin.lastVisit) : 'None yet'}
@@ -674,14 +733,43 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                         {isSales ? (
                           <div className="actions-row" style={{ marginTop: '0.55rem' }}>
                             <Link
-                              to={`/sales/checkin/${pin.id}`}
+                              to={`/sales/checkin/site/${pin.siteId}`}
                               className="btn btn-primary btn-sm"
                             >
                               <MapPinned size={14} style={{ marginRight: 4 }} />
-                              Check in here
+                              Check in at site
                             </Link>
                             <Link
-                              to={`/sales/architects/${pin.id}`}
+                              to={`/sales/architects/${pin.architectId}`}
+                              className="btn btn-secondary btn-sm"
+                            >
+                              Architect
+                            </Link>
+                          </div>
+                        ) : (
+                          <Link
+                            to={`/admin/architects/${pin.architectId}`}
+                            className="btn btn-primary btn-sm"
+                            style={{ marginTop: '0.55rem' }}
+                          >
+                            Open architect
+                          </Link>
+                        )}
+                      </>
+                    )}
+                    {pin.kind === 'office' && (
+                      <>
+                        <p>Studio / office pin</p>
+                        {isSales ? (
+                          <div className="actions-row" style={{ marginTop: '0.55rem' }}>
+                            <Link
+                              to={`/sales/checkin/office/${pin.architectId}`}
+                              className="btn btn-primary btn-sm"
+                            >
+                              Check in at office
+                            </Link>
+                            <Link
+                              to={`/sales/architects/${pin.architectId}`}
                               className="btn btn-secondary btn-sm"
                             >
                               Profile
@@ -689,7 +777,7 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                           </div>
                         ) : (
                           <Link
-                            to={`/admin/architects/${pin.id}`}
+                            to={`/admin/architects/${pin.architectId}`}
                             className="btn btn-primary btn-sm"
                             style={{ marginTop: '0.55rem' }}
                           >
@@ -697,7 +785,8 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                           </Link>
                         )}
                       </>
-                    ) : (
+                    )}
+                    {pin.kind === 'checkin' && (
                       <>
                         <p>{pin.label}</p>
                         <p>Checked in: {formatDateTime(pin.lastVisit)}</p>
@@ -716,7 +805,11 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                 <div className="map-overlay-legend">
                   <div className="legend-item">
                     <span className="legend-swatch arch" />
-                    {isSales ? 'My architect site' : 'Architect / project site'}
+                    Referred project site
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-swatch office" />
+                    Architect office
                   </div>
                   <div className="legend-item">
                     <span className="legend-swatch check" />
@@ -741,43 +834,56 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                       <X size={14} />
                     </button>
                     <div className="map-popup-kicker">
-                      {selected.kind === 'architect' ? 'Architect site' : 'Check-in'}
+                      {selected.kind === 'site'
+                        ? 'Project site'
+                        : selected.kind === 'office'
+                          ? 'Architect office'
+                          : 'Check-in'}
                     </div>
                     <h4>{selected.name}</h4>
-                    <p>
-                      {selected.kind === 'architect' ? selected.site : selected.label}
-                    </p>
+                    <p>{selected.subtitle}</p>
                     <p className="map-floating-meta">
                       {selected.lat.toFixed(4)}, {selected.lng.toFixed(4)}
-                      {selected.kind === 'architect'
+                      {selected.kind === 'site'
                         ? ` · ${selected.leadStatus}`
                         : ` · ${selected.region}`}
                     </p>
-                    {isSales && selected.kind === 'architect' && (
+                    {isSales && selected.kind === 'site' && (
                       <div className="actions-row" style={{ marginTop: '0.65rem' }}>
                         <Link
-                          to={`/sales/checkin/${selected.id}`}
+                          to={`/sales/checkin/site/${selected.siteId}`}
                           className="btn btn-primary btn-sm"
                         >
-                          Check in
+                          Check in at site
                         </Link>
                         <Link
-                          to={`/sales/architects/${selected.id}`}
+                          to={`/sales/architects/${selected.architectId}`}
                           className="btn btn-secondary btn-sm"
                         >
-                          Profile
+                          Architect
                         </Link>
                       </div>
                     )}
-                    {!isSales && selected.kind === 'architect' && (
-                      <Link
-                        to={`/admin/architects/${selected.id}`}
-                        className="btn btn-primary btn-sm"
-                        style={{ marginTop: '0.65rem' }}
-                      >
-                        Open profile
-                      </Link>
+                    {isSales && selected.kind === 'office' && (
+                      <div className="actions-row" style={{ marginTop: '0.65rem' }}>
+                        <Link
+                          to={`/sales/checkin/office/${selected.architectId}`}
+                          className="btn btn-primary btn-sm"
+                        >
+                          Check in at office
+                        </Link>
+                      </div>
                     )}
+                    {!isSales &&
+                      (selected.kind === 'site' || selected.kind === 'office') && (
+                        <Link
+                          to={`/admin/architects/${selected.architectId}`}
+                          className="btn btn-primary btn-sm"
+                          style={{ marginTop: '0.65rem' }}
+                        >
+                          Open architect
+                        </Link>
+                      )}
                   </div>
                 )}
               </>,

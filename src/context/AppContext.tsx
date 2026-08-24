@@ -10,6 +10,7 @@ import {
 import {
   architects as seedArchitects,
   salespeople as seedSalespeople,
+  sites as seedSites,
   visits as seedVisits,
 } from '../data/mockData';
 import { nextLeadStatus, todayISODate } from '../data/helpers';
@@ -17,15 +18,18 @@ import type {
   Architect,
   Salesperson,
   SessionUser,
+  Site,
   Visit,
   VisitOutcome,
 } from '../data/types';
 
+/** v2 keys — architect/site split; ignores legacy flat-architect cache */
 const KEYS = {
   user: 'Jindal-crm-user',
-  architects: 'Jindal-crm-architects',
-  visits: 'Jindal-crm-visits',
-  salespeople: 'Jindal-crm-salespeople',
+  architects: 'Jindal-crm-v2-architects',
+  sites: 'Jindal-crm-v2-sites',
+  visits: 'Jindal-crm-v2-visits',
+  salespeople: 'Jindal-crm-v2-salespeople',
 } as const;
 
 function loadJson<T>(key: string, fallback: T): T {
@@ -48,9 +52,14 @@ function saveJson(key: string, value: unknown) {
 
 interface DataContextValue {
   architects: Architect[];
+  sites: Site[];
   visits: Visit[];
   salespeople: Salesperson[];
-  addArchitect: (arch: Omit<Architect, 'id' | 'registeredAt'>) => Architect;
+  addArchitect: (
+    arch: Omit<Architect, 'id' | 'registeredAt'>,
+    firstSite?: Omit<Site, 'id' | 'architectId' | 'referredAt'>
+  ) => { architect: Architect; site?: Site };
+  addSite: (site: Omit<Site, 'id' | 'referredAt'>) => Site;
   addVisit: (visit: Omit<Visit, 'id'>) => Visit;
   recordCheckIn: (
     salespersonId: string,
@@ -64,6 +73,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [architects, setArchitects] = useState<Architect[]>(() =>
     loadJson(KEYS.architects, seedArchitects)
   );
+  const [sites, setSites] = useState<Site[]>(() =>
+    loadJson(KEYS.sites, seedSites)
+  );
   const [visits, setVisits] = useState<Visit[]>(() =>
     loadJson(KEYS.visits, seedVisits)
   );
@@ -72,21 +84,45 @@ export function DataProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => saveJson(KEYS.architects, architects), [architects]);
+  useEffect(() => saveJson(KEYS.sites, sites), [sites]);
   useEffect(() => saveJson(KEYS.visits, visits), [visits]);
   useEffect(() => saveJson(KEYS.salespeople, salespeople), [salespeople]);
 
   const addArchitect = useCallback(
-    (arch: Omit<Architect, 'id' | 'registeredAt'>) => {
-      const created: Architect = {
+    (
+      arch: Omit<Architect, 'id' | 'registeredAt'>,
+      firstSite?: Omit<Site, 'id' | 'architectId' | 'referredAt'>
+    ) => {
+      const architect: Architect = {
         ...arch,
         id: `arch-${Date.now()}`,
         registeredAt: todayISODate(),
       };
-      setArchitects((prev) => [created, ...prev]);
-      return created;
+      setArchitects((prev) => [architect, ...prev]);
+      let site: Site | undefined;
+      if (firstSite) {
+        site = {
+          ...firstSite,
+          id: `site-${Date.now()}`,
+          architectId: architect.id,
+          referredAt: todayISODate(),
+        };
+        setSites((prev) => [site!, ...prev]);
+      }
+      return { architect, site };
     },
     []
   );
+
+  const addSite = useCallback((site: Omit<Site, 'id' | 'referredAt'>) => {
+    const created: Site = {
+      ...site,
+      id: `site-${Date.now()}`,
+      referredAt: todayISODate(),
+    };
+    setSites((prev) => [created, ...prev]);
+    return created;
+  }, []);
 
   const addVisit = useCallback((visit: Omit<Visit, 'id'>) => {
     const created: Visit = {
@@ -94,14 +130,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
       id: `v-${Date.now()}`,
     };
     setVisits((prev) => [created, ...prev]);
-    setArchitects((prev) =>
-      prev.map((a) => {
-        if (a.id !== visit.architectId) return a;
-        const leadStatus = nextLeadStatus(a.leadStatus, visit.outcome);
-        const preferredMarble = visit.marbleDiscussed ?? a.preferredMarble;
-        return { ...a, leadStatus, preferredMarble };
-      })
-    );
+    if (visit.siteId) {
+      setSites((prev) =>
+        prev.map((s) => {
+          if (s.id !== visit.siteId) return s;
+          return {
+            ...s,
+            leadStatus: nextLeadStatus(s.leadStatus, visit.outcome),
+            preferredMarble: visit.marbleDiscussed ?? s.preferredMarble,
+          };
+        })
+      );
+    }
     return created;
   }, []);
 
@@ -122,13 +162,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       architects,
+      sites,
       visits,
       salespeople,
       addArchitect,
+      addSite,
       addVisit,
       recordCheckIn,
     }),
-    [architects, visits, salespeople, addArchitect, addVisit, recordCheckIn]
+    [
+      architects,
+      sites,
+      visits,
+      salespeople,
+      addArchitect,
+      addSite,
+      addVisit,
+      recordCheckIn,
+    ]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

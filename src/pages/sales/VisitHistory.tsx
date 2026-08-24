@@ -7,11 +7,12 @@ import {
   formatDateTime,
   getSalesperson,
   outcomeClass,
+  visitLocationLabel,
 } from '../../data/helpers';
 
 export default function VisitHistoryPage() {
   const { user } = useAuth();
-  const { visits, architects, salespeople } = useData();
+  const { visits, architects, sites, salespeople } = useData();
   const [params, setParams] = useSearchParams();
   const savedId = params.get('saved');
 
@@ -23,6 +24,10 @@ export default function VisitHistoryPage() {
   const savedArch = savedVisit
     ? architects.find((a) => a.id === savedVisit.architectId)
     : undefined;
+  const savedSite =
+    savedVisit?.siteId != null
+      ? sites.find((s) => s.id === savedVisit.siteId)
+      : undefined;
   const me = user?.salespersonId
     ? getSalesperson(user.salespersonId, salespeople)
     : undefined;
@@ -38,7 +43,7 @@ export default function VisitHistoryPage() {
         <div>
           <div className="eyebrow">Field sales</div>
           <h1>My Visit History</h1>
-          <p>Past visits with outcomes, notes, and follow-up dates.</p>
+          <p>Visits at referred sites and architect offices.</p>
         </div>
       </div>
 
@@ -47,6 +52,7 @@ export default function VisitHistoryPage() {
           <VisitSummaryCard
             visit={savedVisit}
             architect={savedArch}
+            site={savedSite}
             salespersonName={me?.name}
             onDismiss={dismissSummary}
           />
@@ -58,7 +64,8 @@ export default function VisitHistoryPage() {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Architect / Site</th>
+              <th>Where</th>
+              <th>Architect</th>
               <th>Outcome</th>
               <th>Marble</th>
               <th>Notes</th>
@@ -69,9 +76,30 @@ export default function VisitHistoryPage() {
             {mine.map((v) => {
               const arch = architects.find((a) => a.id === v.architectId);
               return (
-                <tr key={v.id} className={v.id === savedId ? 'row-highlight' : ''}>
+                <tr
+                  key={v.id}
+                  className={v.id === savedId ? 'row-highlight' : ''}
+                >
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {formatDateTime(v.date)}
+                  </td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        v.checkInType === 'office' ? 'badge-muted' : 'badge-info'
+                      }`}
+                    >
+                      {v.checkInType === 'office' ? 'Office' : 'Site'}
+                    </span>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--ink-muted)',
+                        marginTop: 4,
+                      }}
+                    >
+                      {visitLocationLabel(v, sites, architects)}
+                    </div>
                   </td>
                   <td>
                     {arch ? (
@@ -81,11 +109,6 @@ export default function VisitHistoryPage() {
                     ) : (
                       <strong>—</strong>
                     )}
-                    <div
-                      style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}
-                    >
-                      {arch?.siteName}
-                    </div>
                   </td>
                   <td>
                     <span className={`badge ${outcomeClass(v.outcome)}`}>
@@ -93,19 +116,17 @@ export default function VisitHistoryPage() {
                     </span>
                   </td>
                   <td>{v.marbleDiscussed ?? '—'}</td>
-                  <td style={{ maxWidth: 280 }}>{v.notes}</td>
-                  <td>
-                    {v.nextFollowUp ? formatDate(v.nextFollowUp) : '—'}
-                  </td>
+                  <td style={{ maxWidth: 240 }}>{v.notes}</td>
+                  <td>{v.nextFollowUp ? formatDate(v.nextFollowUp) : '—'}</td>
                 </tr>
               );
             })}
             {mine.length === 0 && (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={7}>
                   <EmptyState
                     title="No visits yet"
-                    description="Check in at an architect site to log your first visit."
+                    description="Open an architect, pick a referred site, and check in."
                     actionLabel="My architects"
                     actionTo="/sales"
                   />

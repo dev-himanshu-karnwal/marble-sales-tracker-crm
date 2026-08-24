@@ -12,6 +12,7 @@ import VisitsPage from './pages/admin/Visits';
 import AdminActivityPage from './pages/admin/Activity';
 import MyArchitectsPage from './pages/sales/MyArchitects';
 import AddArchitectPage from './pages/sales/AddArchitect';
+import AddSitePage from './pages/sales/AddSite';
 import CheckInPage from './pages/sales/CheckIn';
 import VisitLogPage from './pages/sales/VisitLog';
 import VisitHistoryPage from './pages/sales/VisitHistory';
@@ -70,8 +71,9 @@ export default function App() {
         <Route path="timeline" element={<SalesActivityPage />} />
         <Route path="add" element={<AddArchitectPage />} />
         <Route path="architects/:id" element={<ArchitectDetailPage />} />
-        <Route path="checkin/:id" element={<CheckInPage />} />
-        <Route path="visit/:id" element={<VisitLogPage />} />
+        <Route path="architects/:id/add-site" element={<AddSitePage />} />
+        <Route path="checkin/:type/:id" element={<CheckInPage />} />
+        <Route path="visit/:type/:id" element={<VisitLogPage />} />
         <Route path="history" element={<VisitHistoryPage />} />
       </Route>
 

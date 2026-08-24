@@ -33,7 +33,7 @@ const PIE_COLORS = [
 ];
 
 export default function AdminDashboard() {
-  const { architects, visits, salespeople } = useData();
+  const { architects, sites, visits, salespeople } = useData();
   const visitsThisMonth = visits.filter((v) => isThisMonth(v.date)).length;
   const totalLeads = countLeads(visits);
   const barData = getVisitsPerSalesperson(visits, salespeople);
@@ -55,24 +55,24 @@ export default function AdminDashboard() {
 
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="label">Total Architects</div>
+          <div className="label">Architects</div>
           <div className="value">{architects.length}</div>
-          <div className="hint">Registered across all regions</div>
+          <div className="hint">Studios / contacts</div>
+        </div>
+        <div className="stat-card">
+          <div className="label">Referred sites</div>
+          <div className="value">{sites.length}</div>
+          <div className="hint">Projects quoted for marble</div>
         </div>
         <div className="stat-card">
           <div className="label">Visits this month</div>
           <div className="value">{visitsThisMonth}</div>
-          <div className="hint">Field check-ins logged</div>
+          <div className="hint">Site & office check-ins</div>
         </div>
         <div className="stat-card">
           <div className="label">Total Leads</div>
           <div className="value">{totalLeads}</div>
           <div className="hint">Outcome: Lead Generated</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">Active Salespeople</div>
-          <div className="value">{salespeople.length}</div>
-          <div className="hint">Delhi NCR · Jaipur · Mumbai +</div>
         </div>
       </div>
 

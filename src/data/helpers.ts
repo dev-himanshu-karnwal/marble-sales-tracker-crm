@@ -1,9 +1,10 @@
-import { architects, salespeople, visits } from './mockData';
+import { architects, salespeople, sites, visits } from './mockData';
 import type {
   Architect,
   LeadStatus,
   PerformanceBadge,
   Salesperson,
+  Site,
   Visit,
   VisitOutcome,
 } from './types';
@@ -29,6 +30,17 @@ export function getArchitect(
   list: Architect[] = architects
 ): Architect | undefined {
   return list.find((a) => a.id === id);
+}
+
+export function getSite(id: string, list: Site[] = sites): Site | undefined {
+  return list.find((s) => s.id === id);
+}
+
+export function getSitesForArchitect(
+  architectId: string,
+  list: Site[] = sites
+): Site[] {
+  return list.filter((s) => s.architectId === architectId);
 }
 
 export function isThisMonth(dateStr: string): boolean {
@@ -82,6 +94,17 @@ export function getArchitectsForSalesperson(
   return allArchitects.filter((a) => a.salespersonId === salespersonId);
 }
 
+export function getSitesForSalesperson(
+  salespersonId: string,
+  allArchitects: Architect[] = architects,
+  allSites: Site[] = sites
+): Site[] {
+  const ids = new Set(
+    getArchitectsForSalesperson(salespersonId, allArchitects).map((a) => a.id)
+  );
+  return allSites.filter((s) => ids.has(s.architectId));
+}
+
 export function countLeads(visitList: Visit[]): number {
   return visitList.filter((v) => v.outcome === 'Lead Generated').length;
 }
@@ -124,9 +147,36 @@ export function nextLeadStatus(
   return current;
 }
 
+/** Best (hottest) lead among an architect's referred sites. */
+export function architectLeadStatus(
+  architectId: string,
+  allSites: Site[] = sites
+): LeadStatus {
+  const mine = getSitesForArchitect(architectId, allSites);
+  if (mine.length === 0) return 'New';
+  return mine.reduce((best, s) =>
+    STATUS_RANK[s.leadStatus] > STATUS_RANK[best] ? s.leadStatus : best,
+    mine[0].leadStatus
+  );
+}
+
+export function visitLocationLabel(
+  visit: Visit,
+  allSites: Site[] = sites,
+  allArchitects: Architect[] = architects
+): string {
+  if (visit.checkInType === 'office') {
+    const arch = getArchitect(visit.architectId, allArchitects);
+    return arch ? `${arch.firm} (office)` : 'Architect office';
+  }
+  const site = visit.siteId ? getSite(visit.siteId, allSites) : undefined;
+  return site?.name ?? 'Project site';
+}
+
 export interface SalespersonStats {
   salesperson: Salesperson;
   architectsRegistered: number;
+  sitesReferred: number;
   visitsThisMonth: number;
   totalVisits: number;
   leadsGenerated: number;
@@ -137,9 +187,11 @@ export interface SalespersonStats {
 export function computeSalespersonStats(
   sp: Salesperson,
   allArchitects: Architect[] = architects,
-  allVisits: Visit[] = visits
+  allVisits: Visit[] = visits,
+  allSites: Site[] = sites
 ): SalespersonStats {
   const myArchitects = getArchitectsForSalesperson(sp.id, allArchitects);
+  const mySites = getSitesForSalesperson(sp.id, allArchitects, allSites);
   const myVisits = getVisitsForSalesperson(sp.id, allVisits);
   const visitsThisMonth = myVisits.filter((v) => isThisMonth(v.date)).length;
   const leadsGenerated = countLeads(myVisits);
@@ -160,6 +212,7 @@ export function computeSalespersonStats(
   return {
     salesperson: sp,
     architectsRegistered: myArchitects.length,
+    sitesReferred: mySites.length,
     visitsThisMonth,
     totalVisits: myVisits.length,
     leadsGenerated,
@@ -171,10 +224,13 @@ export function computeSalespersonStats(
 export function getAllLeaderboard(
   allArchitects: Architect[] = architects,
   allVisits: Visit[] = visits,
-  allSalespeople: Salesperson[] = salespeople
+  allSalespeople: Salesperson[] = salespeople,
+  allSites: Site[] = sites
 ): SalespersonStats[] {
   return allSalespeople
-    .map((sp) => computeSalespersonStats(sp, allArchitects, allVisits))
+    .map((sp) =>
+      computeSalespersonStats(sp, allArchitects, allVisits, allSites)
+    )
     .sort((a, b) => {
       if (b.leadsGenerated !== a.leadsGenerated) {
         return b.leadsGenerated - a.leadsGenerated;
@@ -215,19 +271,19 @@ export function getVisitsTrend(
 }
 
 export function getLeadsByRegion(
-  allArchitects: Architect[] = architects,
+  allSites: Site[] = sites,
   allVisits: Visit[] = visits
 ): { name: string; value: number }[] {
-  const leadArchIds = new Set(
+  const leadSiteIds = new Set(
     allVisits
-      .filter((v) => v.outcome === 'Lead Generated')
-      .map((v) => v.architectId)
+      .filter((v) => v.outcome === 'Lead Generated' && v.siteId)
+      .map((v) => v.siteId!)
   );
   const byRegion: Record<string, number> = {};
-  for (const id of leadArchIds) {
-    const arch = allArchitects.find((a) => a.id === id);
-    if (arch) {
-      byRegion[arch.region] = (byRegion[arch.region] || 0) + 1;
+  for (const id of leadSiteIds) {
+    const site = allSites.find((s) => s.id === id);
+    if (site) {
+      byRegion[site.region] = (byRegion[site.region] || 0) + 1;
     }
   }
   return Object.entries(byRegion).map(([name, value]) => ({ name, value }));

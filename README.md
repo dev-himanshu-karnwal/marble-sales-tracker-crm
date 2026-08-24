@@ -23,8 +23,10 @@ On the login screen:
 | Role | Screens |
 |------|---------|
 | Shared | Role select |
-| Admin | Dashboard, Leaderboard, Map View, Activity Timeline, Architects, Architect detail, Visits log |
-| Sales | My Architects, My Map, Activity Timeline, Architect detail, Add Architect, Check-In, Visit Log, Visit History |
+| Admin | Dashboard, Leaderboard, Map View, Activity Timeline, Architects (+ referred sites), Architect detail, Visits log |
+| Sales | My Architects, My Map, Activity Timeline, Architect detail, Add Architect, Add Site, Check-In (site/office), Visit Log, Visit History |
+
+Architects are contacts/studios. Project **sites** are only those the architect referred for marble — check-ins happen at a site or at the architect office.
 
 ## Stack
 

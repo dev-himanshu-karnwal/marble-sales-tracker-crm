@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth, useData } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
+import EmptyState from '../../components/EmptyState';
 import { MARBLE_PRODUCTS, VISIT_OUTCOMES } from '../../data/mockData';
 import type { VisitOutcome } from '../../data/types';
 
@@ -12,47 +13,61 @@ function nowLocalInput(): string {
 }
 
 export default function VisitLogPage() {
-  const { id } = useParams();
+  const { type, id } = useParams<{ type: string; id: string }>();
   const { user } = useAuth();
-  const { architects, addVisit } = useData();
+  const { architects, sites, addVisit } = useData();
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const arch = architects.find(
-    (a) => a.id === id && a.salespersonId === user?.salespersonId
-  );
+
+  const isOffice = type === 'office';
+  const isSite = type === 'site';
+
+  const site = isSite ? sites.find((s) => s.id === id) : undefined;
+  const arch = isOffice
+    ? architects.find((a) => a.id === id)
+    : site
+      ? architects.find((a) => a.id === site.architectId)
+      : undefined;
+
+  const assigned =
+    arch && user?.salespersonId && arch.salespersonId === user.salespersonId;
 
   const [date, setDate] = useState(nowLocalInput());
   const [notes, setNotes] = useState('');
   const [outcome, setOutcome] = useState<VisitOutcome>('Interested');
   const [nextFollowUp, setNextFollowUp] = useState('');
-  const [marble, setMarble] = useState(arch?.preferredMarble ?? MARBLE_PRODUCTS[0]);
+  const [marble, setMarble] = useState(
+    site?.preferredMarble ?? arch?.preferredMarble ?? MARBLE_PRODUCTS[0]
+  );
 
-  if (!arch || !user?.salespersonId) {
+  if (!assigned || !arch || (!isOffice && !isSite) || (isSite && !site)) {
     return (
-      <div className="empty-state empty-state-rich">
-        <h3>Architect not found</h3>
-        <p>Return to your list and open a site check-in first.</p>
-        <Link to="/sales" className="btn btn-secondary btn-sm">
-          Back to my architects
-        </Link>
-      </div>
+      <EmptyState
+        title="Cannot log visit"
+        description="Check in at a referred site or architect office first."
+        actionLabel="My architects"
+        actionTo="/sales"
+      />
     );
   }
+
+  const placeLabel = isOffice ? `${arch.firm} (office)` : site!.name;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     const created = addVisit({
       architectId: arch.id,
-      salespersonId: user.salespersonId!,
+      siteId: isSite ? site!.id : undefined,
+      checkInType: isOffice ? 'office' : 'site',
+      salespersonId: user!.salespersonId!,
       date: new Date(date).toISOString(),
       outcome,
       notes,
       nextFollowUp: nextFollowUp || undefined,
       marbleDiscussed: marble,
     });
-    const follow =
-      nextFollowUp ? ` Follow-up set for ${nextFollowUp}.` : '';
-    showToast(`Visit logged — ${outcome}.${follow}`);
+    const follow = nextFollowUp ? ` Follow-up set for ${nextFollowUp}.` : '';
+    showToast(`Visit logged at ${placeLabel} — ${outcome}.${follow}`);
     navigate(`/sales/history?saved=${created.id}`);
   };
 
@@ -60,11 +75,11 @@ export default function VisitLogPage() {
     <div>
       <div className="page-header">
         <div>
-          <div className="eyebrow">Visit log</div>
+          <div className="eyebrow">
+            Visit log · {isOffice ? 'Office' : 'Project site'}
+          </div>
           <h1>Log visit — {arch.name}</h1>
-          <p>
-            {arch.siteName}. Date/time is auto-filled; adjust if needed.
-          </p>
+          <p>{placeLabel}. Date/time is auto-filled; adjust if needed.</p>
         </div>
       </div>
 
@@ -137,13 +152,9 @@ export default function VisitLogPage() {
           <button type="submit" className="btn btn-primary">
             Save visit
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => navigate('/sales')}
-          >
+          <Link to={`/sales/architects/${arch.id}`} className="btn btn-secondary">
             Cancel
-          </button>
+          </Link>
         </div>
       </form>
     </div>

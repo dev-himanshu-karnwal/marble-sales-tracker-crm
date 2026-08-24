@@ -1,12 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { MapPinned, Plus } from 'lucide-react';
+import { Building2, MapPinned, Plus } from 'lucide-react';
 import { useAuth, useData } from '../../context/AppContext';
 import EmptyState from '../../components/EmptyState';
-import { leadStatusClass } from '../../data/helpers';
+import {
+  architectLeadStatus,
+  getSitesForArchitect,
+  leadStatusClass,
+} from '../../data/helpers';
 
 export default function MyArchitectsPage() {
   const { user } = useAuth();
-  const { architects } = useData();
+  const { architects, sites } = useData();
   const navigate = useNavigate();
   const mine = architects.filter((a) => a.salespersonId === user?.salespersonId);
 
@@ -17,8 +21,8 @@ export default function MyArchitectsPage() {
           <div className="eyebrow">Field sales</div>
           <h1>My Architects</h1>
           <p>
-            Architects you registered or were assigned. Open a profile or check
-            in at a site to log a visit.
+            Architects and studios you work with. Open a profile to see referred
+            project sites and check in at a site or their office.
           </p>
         </div>
         <Link to="/sales/add" className="btn btn-primary">
@@ -31,56 +35,64 @@ export default function MyArchitectsPage() {
         <div className="card">
           <EmptyState
             title="No architects yet"
-            description="Register your first architect or studio to start logging site visits."
+            description="Register an architect and the first site they referred for marble."
             actionLabel="Add architect"
             actionTo="/sales/add"
           />
         </div>
       ) : (
         <div className="arch-grid">
-          {mine.map((a) => (
-            <div
-              key={a.id}
-              className="arch-card"
-              role="button"
-              tabIndex={0}
-              onClick={() => navigate(`/sales/architects/${a.id}`)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  navigate(`/sales/architects/${a.id}`);
-                }
-              }}
-            >
-              <div className="top">
-                <div>
-                  <h3>{a.name}</h3>
-                  <div className="firm">{a.firm}</div>
+          {mine.map((a) => {
+            const referred = getSitesForArchitect(a.id, sites);
+            const lead = architectLeadStatus(a.id, sites);
+            return (
+              <div
+                key={a.id}
+                className="arch-card"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/sales/architects/${a.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/sales/architects/${a.id}`);
+                  }
+                }}
+              >
+                <div className="top">
+                  <div>
+                    <h3>{a.name}</h3>
+                    <div className="firm">{a.firm}</div>
+                  </div>
+                  <span className={`badge ${leadStatusClass(lead)}`}>{lead}</span>
                 </div>
-                <span className={`badge ${leadStatusClass(a.leadStatus)}`}>
-                  {a.leadStatus}
-                </span>
+                <div className="site">
+                  <Building2
+                    size={13}
+                    style={{ verticalAlign: -2, marginRight: 4 }}
+                  />
+                  {referred.length} referred site
+                  {referred.length === 1 ? '' : 's'}
+                  {referred[0] ? ` · ${referred[0].name}` : ''}
+                  {referred.length > 1 ? ` +${referred.length - 1} more` : ''}
+                </div>
+                <div className="footer">
+                  <span>{a.region}</span>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/sales/architects/${a.id}`);
+                    }}
+                  >
+                    <MapPinned size={14} />
+                    Sites & check-in
+                  </button>
+                </div>
               </div>
-              <div className="site">{a.siteName}</div>
-              <div className="footer">
-                <span>
-                  {a.region}
-                  {a.preferredMarble ? ` · ${a.preferredMarble}` : ''}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/sales/checkin/${a.id}`);
-                  }}
-                >
-                  <MapPinned size={14} />
-                  Check In
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

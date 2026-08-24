@@ -6,12 +6,14 @@ import {
   formatDateTime,
   getArchitect,
   getSalesperson,
+  getSite,
   outcomeClass,
+  visitLocationLabel,
 } from '../../data/helpers';
 import { VISIT_OUTCOMES } from '../../data/mockData';
 
 export default function VisitsPage() {
-  const { visits, architects, salespeople } = useData();
+  const { visits, architects, sites, salespeople } = useData();
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState('');
   const [outcome, setOutcome] = useState('all');
@@ -33,16 +35,18 @@ export default function VisitsPage() {
         if (spId !== 'all' && v.salespersonId !== spId) return false;
         if (!query) return true;
         const arch = architects.find((a) => a.id === v.architectId);
+        const site = v.siteId ? getSite(v.siteId, sites) : undefined;
         const sp = getSalesperson(v.salespersonId, salespeople);
         return (
           arch?.name.toLowerCase().includes(query) ||
           arch?.firm.toLowerCase().includes(query) ||
+          site?.name.toLowerCase().includes(query) ||
           sp?.name.toLowerCase().includes(query) ||
           v.notes.toLowerCase().includes(query) ||
           v.marbleDiscussed?.toLowerCase().includes(query)
         );
       });
-  }, [visits, architects, salespeople, q, outcome, spId]);
+  }, [visits, architects, sites, salespeople, q, outcome, spId]);
 
   const filterSp = spId !== 'all' ? getSalesperson(spId, salespeople) : null;
 
@@ -53,8 +57,7 @@ export default function VisitsPage() {
           <div className="eyebrow">Admin</div>
           <h1>All Visits Log</h1>
           <p>
-            Complete visit history across the sales team — outcomes, notes, and
-            marble discussed.
+            Visits at referred project sites and architect offices.
             {filterSp && (
               <>
                 {' '}
@@ -68,7 +71,7 @@ export default function VisitsPage() {
       <div className="search-bar">
         <input
           type="search"
-          placeholder="Search architect, salesperson, notes…"
+          placeholder="Search architect, site, notes…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -98,6 +101,7 @@ export default function VisitsPage() {
           <thead>
             <tr>
               <th>Date</th>
+              <th>Where</th>
               <th>Architect</th>
               <th>Salesperson</th>
               <th>Outcome</th>
@@ -107,14 +111,26 @@ export default function VisitsPage() {
           </thead>
           <tbody>
             {rows.map((v) => {
-              const arch =
-                getArchitect(v.architectId, architects) ??
-                architects.find((a) => a.id === v.architectId);
+              const arch = getArchitect(v.architectId, architects);
               const sp = getSalesperson(v.salespersonId, salespeople);
               return (
                 <tr key={v.id}>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {formatDateTime(v.date)}
+                  </td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        v.checkInType === 'office' ? 'badge-muted' : 'badge-info'
+                      }`}
+                    >
+                      {v.checkInType === 'office' ? 'Office' : 'Site'}
+                    </span>
+                    <div
+                      style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', marginTop: 4 }}
+                    >
+                      {visitLocationLabel(v, sites, architects)}
+                    </div>
                   </td>
                   <td>
                     {arch ? (
@@ -135,19 +151,23 @@ export default function VisitsPage() {
                     </span>
                   </td>
                   <td>{v.marbleDiscussed ?? '—'}</td>
-                  <td style={{ maxWidth: 320 }}>{v.notes}</td>
+                  <td style={{ maxWidth: 280 }}>{v.notes}</td>
                 </tr>
               );
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={7}>
                   <EmptyState
                     title="No visits match filters"
                     description="Try clearing the salesperson or outcome filter."
-                    actionLabel={spId !== 'all' ? 'Clear salesperson filter' : undefined}
+                    actionLabel={
+                      spId !== 'all' ? 'Clear salesperson filter' : undefined
+                    }
                     onAction={
-                      spId !== 'all' ? () => setSalespersonFilter('all') : undefined
+                      spId !== 'all'
+                        ? () => setSalespersonFilter('all')
+                        : undefined
                     }
                   />
                 </td>
