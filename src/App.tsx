@@ -14,6 +14,7 @@ import AddArchitectPage from './pages/sales/AddArchitect';
 import CheckInPage from './pages/sales/CheckIn';
 import VisitLogPage from './pages/sales/VisitLog';
 import VisitHistoryPage from './pages/sales/VisitHistory';
+import MyMapPage from './pages/sales/MyMap';
 
 function RequireRole({
   role,
@@ -62,6 +63,7 @@ export default function App() {
         }
       >
         <Route index element={<MyArchitectsPage />} />
+        <Route path="map" element={<MyMapPage />} />
         <Route path="add" element={<AddArchitectPage />} />
         <Route path="checkin/:id" element={<CheckInPage />} />
         <Route path="visit/:id" element={<VisitLogPage />} />

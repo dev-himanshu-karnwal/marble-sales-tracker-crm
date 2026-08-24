@@ -41,6 +41,7 @@ export default function AppLayout() {
 
   const salesLinks = [
     { to: '/sales', end: true, label: 'My Architects', icon: Users },
+    { to: '/sales/map', label: 'My Map', icon: Map },
     { to: '/sales/add', label: 'Add Architect', icon: PlusCircle },
     { to: '/sales/history', label: 'Visit History', icon: History },
   ];
