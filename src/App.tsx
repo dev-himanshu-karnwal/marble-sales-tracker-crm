@@ -9,12 +9,14 @@ import MapViewPage from './pages/admin/MapView';
 import ArchitectsPage from './pages/admin/Architects';
 import ArchitectDetailPage from './pages/admin/ArchitectDetail';
 import VisitsPage from './pages/admin/Visits';
+import AdminActivityPage from './pages/admin/Activity';
 import MyArchitectsPage from './pages/sales/MyArchitects';
 import AddArchitectPage from './pages/sales/AddArchitect';
 import CheckInPage from './pages/sales/CheckIn';
 import VisitLogPage from './pages/sales/VisitLog';
 import VisitHistoryPage from './pages/sales/VisitHistory';
 import MyMapPage from './pages/sales/MyMap';
+import SalesActivityPage from './pages/sales/Activity';
 
 function RequireRole({
   role,
@@ -49,6 +51,7 @@ export default function App() {
         <Route index element={<AdminDashboard />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="map" element={<MapViewPage />} />
+        <Route path="timeline" element={<AdminActivityPage />} />
         <Route path="architects" element={<ArchitectsPage />} />
         <Route path="architects/:id" element={<ArchitectDetailPage />} />
         <Route path="visits" element={<VisitsPage />} />
@@ -64,6 +67,7 @@ export default function App() {
       >
         <Route index element={<MyArchitectsPage />} />
         <Route path="map" element={<MyMapPage />} />
+        <Route path="timeline" element={<SalesActivityPage />} />
         <Route path="add" element={<AddArchitectPage />} />
         <Route path="architects/:id" element={<ArchitectDetailPage />} />
         <Route path="checkin/:id" element={<CheckInPage />} />

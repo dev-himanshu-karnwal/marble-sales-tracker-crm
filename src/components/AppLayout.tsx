@@ -11,6 +11,7 @@ import {
   Trophy,
   Users,
   History,
+  GitBranch,
   X,
 } from 'lucide-react';
 import { useAuth, useData } from '../context/AppContext';
@@ -36,6 +37,7 @@ export default function AppLayout() {
     { to: '/admin', end: true, label: 'Dashboard', icon: LayoutDashboard },
     { to: '/admin/leaderboard', label: 'Leaderboard', icon: Trophy },
     { to: '/admin/map', label: 'Map View', icon: Map },
+    { to: '/admin/timeline', label: 'Timeline', icon: GitBranch },
     { to: '/admin/architects', label: 'Architects', icon: Building2 },
     { to: '/admin/visits', label: 'All Visits', icon: ClipboardList },
   ];
@@ -43,6 +45,7 @@ export default function AppLayout() {
   const salesLinks = [
     { to: '/sales', end: true, label: 'My Architects', icon: Users },
     { to: '/sales/map', label: 'My Map', icon: Map },
+    { to: '/sales/timeline', label: 'Timeline', icon: GitBranch },
     { to: '/sales/add', label: 'Add Architect', icon: PlusCircle },
     { to: '/sales/history', label: 'Visit History', icon: History },
   ];

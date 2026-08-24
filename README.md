@@ -23,8 +23,8 @@ On the login screen:
 | Role | Screens |
 |------|---------|
 | Shared | Role select |
-| Admin | Dashboard, Leaderboard, Map View, Architects, Architect detail, Visits log |
-| Sales | My Architects, My Map, Architect detail, Add Architect, Check-In, Visit Log, Visit History |
+| Admin | Dashboard, Leaderboard, Map View, Activity Timeline, Architects, Architect detail, Visits log |
+| Sales | My Architects, My Map, Activity Timeline, Architect detail, Add Architect, Check-In, Visit Log, Visit History |
 
 ## Stack
 
