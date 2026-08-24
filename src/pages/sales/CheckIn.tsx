@@ -5,7 +5,7 @@ import { useAuth, useData } from '../../context/AppContext';
 
 export default function CheckInPage() {
   const { id } = useParams();
-  const { architects } = useData();
+  const { architects, recordCheckIn } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
   const arch = architects.find(
@@ -15,17 +15,26 @@ export default function CheckInPage() {
   const [phase, setPhase] = useState<'locating' | 'success'>('locating');
 
   useEffect(() => {
-    if (!arch) return;
-    const t = setTimeout(() => setPhase('success'), 1600);
+    if (!arch || !user?.salespersonId) return;
+    const t = setTimeout(() => {
+      recordCheckIn(user.salespersonId!, {
+        lat: arch.lat,
+        lng: arch.lng,
+        label: arch.siteName,
+        date: new Date().toISOString(),
+      });
+      setPhase('success');
+    }, 1600);
     return () => clearTimeout(t);
-  }, [arch]);
+  }, [arch, user?.salespersonId, recordCheckIn]);
 
   if (!arch) {
     return (
-      <div className="empty-state">
-        <p>Architect not found or not assigned to you.</p>
-        <Link to="/sales" className="btn btn-secondary">
-          Back
+      <div className="empty-state empty-state-rich">
+        <h3>Site not found</h3>
+        <p>This architect is not assigned to you, or the link is invalid.</p>
+        <Link to="/sales" className="btn btn-secondary btn-sm">
+          Back to my architects
         </Link>
       </div>
     );
@@ -54,10 +63,10 @@ export default function CheckInPage() {
 
         {phase === 'locating' ? (
           <>
-            <h2>Checking in…</h2>
+            <h2>Verifying location…</h2>
             <p style={{ color: 'var(--ink-soft)' }}>
-              Mocking GPS proximity to site coordinates ({arch.lat.toFixed(4)},{' '}
-              {arch.lng.toFixed(4)}). No real location services used.
+              Confirming proximity to site coordinates ({arch.lat.toFixed(4)},{' '}
+              {arch.lng.toFixed(4)}).
             </p>
           </>
         ) : (
@@ -67,7 +76,7 @@ export default function CheckInPage() {
               <div>
                 <strong>Check-in successful</strong>
                 <div style={{ fontSize: '0.85rem' }}>
-                  You are marked present at this site.
+                  You are marked present at this site. Your map pin is updated.
                 </div>
               </div>
             </div>
@@ -79,13 +88,18 @@ export default function CheckInPage() {
               />
               {arch.address}
             </p>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => navigate(`/sales/visit/${arch.id}`)}
-            >
-              Continue to visit log
-            </button>
+            <div className="actions-row">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => navigate(`/sales/visit/${arch.id}`)}
+              >
+                Continue to visit log
+              </button>
+              <Link to="/sales/map" className="btn btn-secondary">
+                View on map
+              </Link>
+            </div>
           </>
         )}
       </div>

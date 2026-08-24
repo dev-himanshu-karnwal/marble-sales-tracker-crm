@@ -1,33 +1,52 @@
 import { architects, salespeople, visits } from './mockData';
 import type {
   Architect,
+  LeadStatus,
   PerformanceBadge,
   Salesperson,
   Visit,
   VisitOutcome,
 } from './types';
 
-const REFERENCE_DATE = new Date('2026-08-24T23:59:59');
-
-export function getSalesperson(id: string): Salesperson | undefined {
-  return salespeople.find((s) => s.id === id);
+/** Always wall-clock "now" so KPIs stay in sync with newly logged visits. */
+export function referenceDate(): Date {
+  return new Date();
 }
 
-export function getArchitect(id: string): Architect | undefined {
-  return architects.find((a) => a.id === id);
+export function todayISODate(): string {
+  return referenceDate().toISOString().slice(0, 10);
+}
+
+export function getSalesperson(
+  id: string,
+  list: Salesperson[] = salespeople
+): Salesperson | undefined {
+  return list.find((s) => s.id === id);
+}
+
+export function getArchitect(
+  id: string,
+  list: Architect[] = architects
+): Architect | undefined {
+  return list.find((a) => a.id === id);
 }
 
 export function isThisMonth(dateStr: string): boolean {
   const d = new Date(dateStr);
+  const ref = referenceDate();
   return (
-    d.getMonth() === REFERENCE_DATE.getMonth() &&
-    d.getFullYear() === REFERENCE_DATE.getFullYear()
+    d.getMonth() === ref.getMonth() && d.getFullYear() === ref.getFullYear()
   );
+}
+
+export function isFollowUpDue(followUpDate?: string): boolean {
+  if (!followUpDate) return false;
+  return followUpDate <= todayISODate();
 }
 
 export function daysAgo(dateStr: string): number {
   const d = new Date(dateStr);
-  const diff = REFERENCE_DATE.getTime() - d.getTime();
+  const diff = referenceDate().getTime() - d.getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
@@ -65,6 +84,44 @@ export function getArchitectsForSalesperson(
 
 export function countLeads(visitList: Visit[]): number {
   return visitList.filter((v) => v.outcome === 'Lead Generated').length;
+}
+
+const STATUS_RANK: Record<LeadStatus, number> = {
+  New: 0,
+  Cold: 0,
+  Warm: 1,
+  Hot: 2,
+  Converted: 3,
+};
+
+export function leadStatusFromOutcome(outcome: VisitOutcome): LeadStatus {
+  switch (outcome) {
+    case 'Lead Generated':
+      return 'Hot';
+    case 'Sample Given':
+      return 'Hot';
+    case 'Interested':
+      return 'Warm';
+    case 'Follow-up Needed':
+      return 'Warm';
+    case 'No Response':
+      return 'Cold';
+    default:
+      return 'Warm';
+  }
+}
+
+/** Advance (or cool) lead status from a visit outcome without demoting Converted. */
+export function nextLeadStatus(
+  current: LeadStatus,
+  outcome: VisitOutcome
+): LeadStatus {
+  if (current === 'Converted') return current;
+  const next = leadStatusFromOutcome(outcome);
+  if (outcome === 'No Response') return 'Cold';
+  if (STATUS_RANK[next] >= STATUS_RANK[current]) return next;
+  if (current === 'New' || current === 'Cold') return next;
+  return current;
 }
 
 export interface SalespersonStats {
@@ -113,9 +170,10 @@ export function computeSalespersonStats(
 
 export function getAllLeaderboard(
   allArchitects: Architect[] = architects,
-  allVisits: Visit[] = visits
+  allVisits: Visit[] = visits,
+  allSalespeople: Salesperson[] = salespeople
 ): SalespersonStats[] {
-  return salespeople
+  return allSalespeople
     .map((sp) => computeSalespersonStats(sp, allArchitects, allVisits))
     .sort((a, b) => {
       if (b.leadsGenerated !== a.leadsGenerated) {
@@ -126,9 +184,10 @@ export function getAllLeaderboard(
 }
 
 export function getVisitsPerSalesperson(
-  allVisits: Visit[] = visits
+  allVisits: Visit[] = visits,
+  allSalespeople: Salesperson[] = salespeople
 ): { name: string; visits: number }[] {
-  return salespeople.map((sp) => ({
+  return allSalespeople.map((sp) => ({
     name: sp.name.split(' ')[0],
     visits: getVisitsForSalesperson(sp.id, allVisits).filter((v) =>
       isThisMonth(v.date)
@@ -141,8 +200,9 @@ export function getVisitsTrend(
   days = 30
 ): { date: string; visits: number }[] {
   const result: { date: string; visits: number }[] = [];
+  const ref = referenceDate();
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(REFERENCE_DATE);
+    const d = new Date(ref);
     d.setDate(d.getDate() - i);
     const key = d.toISOString().slice(0, 10);
     const count = allVisits.filter((v) => v.date.startsWith(key)).length;
@@ -230,4 +290,8 @@ export function badgeClass(badge: PerformanceBadge): string {
     default:
       return 'badge-muted';
   }
+}
+
+export function phoneHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, '')}`;
 }

@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, useData } from '../../context/AppContext';
+import { useToast } from '../../context/ToastContext';
 import { MARBLE_PRODUCTS, REGIONS } from '../../data/mockData';
 import type { LeadStatus } from '../../data/types';
 
 export default function AddArchitectPage() {
   const { user } = useAuth();
   const { addArchitect } = useData();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -29,7 +31,7 @@ export default function AddArchitectPage() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!user?.salespersonId) return;
-    addArchitect({
+    const created = addArchitect({
       name: form.name,
       firm: form.firm,
       phone: form.phone,
@@ -43,7 +45,8 @@ export default function AddArchitectPage() {
       leadStatus: form.leadStatus,
       preferredMarble: form.preferredMarble,
     });
-    navigate('/sales');
+    showToast(`${created.name} registered — ready for site check-in.`);
+    navigate(`/sales/architects/${created.id}`);
   };
 
   return (
@@ -54,7 +57,7 @@ export default function AddArchitectPage() {
           <h1>Add New Architect</h1>
           <p>
             Register an architect or studio and link them to a project site.
-            GPS fields are pre-filled mock coordinates.
+            Site coordinates are pre-filled and editable.
           </p>
         </div>
       </div>
@@ -149,7 +152,7 @@ export default function AddArchitectPage() {
             </select>
           </div>
           <div className="field">
-            <label htmlFor="lat">GPS latitude (mock)</label>
+            <label htmlFor="lat">Site latitude</label>
             <input
               id="lat"
               value={form.lat}
@@ -157,7 +160,7 @@ export default function AddArchitectPage() {
             />
           </div>
           <div className="field">
-            <label htmlFor="lng">GPS longitude (mock)</label>
+            <label htmlFor="lng">Site longitude</label>
             <input
               id="lng"
               value={form.lng}

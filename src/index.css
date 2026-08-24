@@ -569,14 +569,14 @@ table.data-table tbody tr.clickable {
 }
 
 .login-hero {
-  background:
-    linear-gradient(160deg, rgba(42, 38, 34, 0.92), rgba(42, 38, 34, 0.78)),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 500' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23d4c4a8'/%3E%3Cstop offset='1' stop-color='%238a7a62'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='400' height='500'/%3E%3Cpath d='M0 80 Q100 40 200 90 T400 70 V0 H0Z' fill='%23ebe4d4' opacity='.25'/%3E%3Cpath d='M0 220 Q150 160 280 230 T400 200 V500 H0Z' fill='%232a2622' opacity='.2'/%3E%3C/svg%3E");
+  background-color: #2a2622;
   background-size: cover;
+  background-position: center;
   color: #f5f0e8;
   padding: 2.5rem 2.25rem;
   display: flex;
   flex-direction: column;
+  min-height: 280px;
   justify-content: flex-end;
 }
 
@@ -1443,6 +1443,207 @@ table.data-table tbody tr.clickable {
   text-align: center;
   padding: 3rem 1.5rem;
   color: var(--ink-muted);
+}
+
+.empty-state-rich h3 {
+  margin: 0 0 0.35rem;
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.empty-state-rich p {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.toast-stack {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: min(380px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  background: var(--charcoal, #2a2622);
+  color: #f5f0e8;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(176, 141, 87, 0.35);
+  animation: fadeUp 0.3s ease;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.toast svg:first-child {
+  color: #c4a46a;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toast-dismiss {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: rgba(245, 240, 232, 0.65);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+}
+
+.toast-dismiss:hover {
+  color: #fff;
+}
+
+.contact-link {
+  color: var(--gold-deep, #8a6a3a);
+  text-decoration: none;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
+}
+
+.text-link {
+  color: var(--gold-deep, #8a6a3a);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.leader-links {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.35rem;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
+.visit-summary-card {
+  border-color: rgba(176, 141, 87, 0.45);
+  background: linear-gradient(135deg, #fffefb, #f8f0e0);
+}
+
+.visit-summary-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.visit-summary-head h2 {
+  margin: 0.15rem 0 0.25rem;
+  font-size: 1.35rem;
+}
+
+.visit-summary-head p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.visit-summary-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.visit-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.visit-summary-grid .k,
+.visit-summary-notes .k {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  margin-bottom: 0.2rem;
+}
+
+.visit-summary-grid .v {
+  font-size: 0.9rem;
+}
+
+.visit-summary-notes p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.row-highlight {
+  background: rgba(176, 141, 87, 0.12);
+}
+
+.map-offline-banner {
+  position: absolute;
+  z-index: 500;
+  left: 0.75rem;
+  right: 0.75rem;
+  top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 1rem;
+  background: rgba(42, 38, 34, 0.92);
+  color: #f5f0e8;
+  border-radius: var(--radius);
+  border: 1px solid rgba(176, 141, 87, 0.4);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.map-offline-banner strong {
+  color: #f0d9a8;
+}
+
+@media print {
+  .sidebar,
+  .mobile-menu-btn,
+  .overlay,
+  .toast-stack,
+  .no-print,
+  .page-header .btn,
+  .search-bar {
+    display: none !important;
+  }
+
+  .main {
+    padding: 0 !important;
+  }
+
+  .visit-summary-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}
+
+@media (max-width: 800px) {
+  .visit-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .actions-row {

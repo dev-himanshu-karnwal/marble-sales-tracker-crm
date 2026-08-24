@@ -21,7 +21,6 @@ import {
   getVisitsTrend,
   isThisMonth,
 } from '../../data/helpers';
-import { salespeople } from '../../data/mockData';
 
 const PIE_COLORS = [
   '#b08d57',
@@ -34,10 +33,10 @@ const PIE_COLORS = [
 ];
 
 export default function AdminDashboard() {
-  const { architects, visits } = useData();
+  const { architects, visits, salespeople } = useData();
   const visitsThisMonth = visits.filter((v) => isThisMonth(v.date)).length;
   const totalLeads = countLeads(visits);
-  const barData = getVisitsPerSalesperson(visits);
+  const barData = getVisitsPerSalesperson(visits, salespeople);
   const trendData = getVisitsTrend(visits, 30);
   const pieData = getLeadsByMarble(visits);
 

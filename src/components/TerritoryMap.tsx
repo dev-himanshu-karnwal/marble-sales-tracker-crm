@@ -31,9 +31,10 @@ import {
   formatDate,
   formatDateTime,
   getSalesperson,
+  isFollowUpDue,
   isThisMonth,
 } from '../data/helpers';
-import { REGIONS, salespeople } from '../data/mockData';
+import { REGIONS } from '../data/mockData';
 import type { LeadStatus } from '../data/types';
 import 'leaflet/dist/leaflet.css';
 
@@ -153,9 +154,12 @@ function MapController({
 }
 
 export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps) {
-  const { architects, visits } = useData();
+  const { architects, visits, salespeople } = useData();
   const isSales = mode === 'salesperson';
-  const me = isSales && salespersonId ? getSalesperson(salespersonId) : undefined;
+  const me =
+    isSales && salespersonId
+      ? getSalesperson(salespersonId, salespeople)
+      : undefined;
 
   const [layer, setLayer] = useState<LayerFilter>('all');
   const [region, setRegion] = useState<string>(
@@ -175,9 +179,25 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
   const [showHeat, setShowHeat] = useState(true);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null);
+  const [mapOffline, setMapOffline] = useState(!navigator.onLine);
+  const [tilesFailed, setTilesFailed] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const onCoords = useCallback((c: { lat: number; lng: number } | null) => {
     setCoords(c);
+  }, []);
+
+  useEffect(() => {
+    const on = () => {
+      setMapOffline(false);
+      setTilesFailed(false);
+    };
+    const off = () => setMapOffline(true);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
   }, []);
 
   const scopedArchitects = useMemo(() => {
@@ -199,7 +219,7 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
       return salespeople.filter((s) => s.id === salespersonId);
     }
     return salespeople;
-  }, [isSales, salespersonId]);
+  }, [isSales, salespersonId, salespeople]);
 
   const insights = useMemo(() => {
     if (!isSales || !salespersonId || !me) return null;
@@ -207,8 +227,8 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
     const hotSites = scopedArchitects.filter((a) => a.leadStatus === 'Hot').length;
     const followUps = scopedVisits.filter(
       (v) =>
-        v.outcome === 'Follow-up Needed' &&
-        (!v.nextFollowUp || v.nextFollowUp <= '2026-08-24')
+        v.outcome === 'Follow-up Needed' ||
+        isFollowUpDue(v.nextFollowUp)
     ).length;
     const visitsThisMonth = scopedVisits.filter((v) => isThisMonth(v.date)).length;
     return {
@@ -232,7 +252,7 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
       const last = myVisits[0];
       const needsFollowUp =
         last?.outcome === 'Follow-up Needed' ||
-        Boolean(last?.nextFollowUp && last.nextFollowUp <= '2026-08-24');
+        isFollowUpDue(last?.nextFollowUp);
       return {
         kind: 'architect',
         id: a.id,
@@ -243,7 +263,7 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
         site: a.siteName,
         region: a.region,
         lastVisit: last?.date,
-        salesperson: getSalesperson(a.salespersonId)?.name ?? '—',
+        salesperson: getSalesperson(a.salespersonId, salespeople)?.name ?? '—',
         leadStatus: a.leadStatus,
         needsFollowUp,
       };
@@ -268,7 +288,7 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
       });
 
     return [...archPins, ...checkPins];
-  }, [scopedArchitects, scopedVisits, scopedSalespeople, isSales]);
+  }, [scopedArchitects, scopedVisits, scopedSalespeople, isSales, salespeople]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -517,8 +537,9 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
           </div>
           <div className="map-sidebar-list" ref={listRef}>
             {filtered.length === 0 && (
-              <div className="empty-state" style={{ padding: '1.5rem 0.75rem' }}>
-                No pins match filters.
+              <div className="empty-state empty-state-rich" style={{ padding: '1.5rem 0.75rem' }}>
+                <h3>No pins match</h3>
+                <p>Try clearing search or switching layer / region filters.</p>
               </div>
             )}
             {filtered.map((pin) => (
@@ -553,6 +574,16 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
         </aside>
 
         <div className="map-stage map-stage-live" ref={setStageEl}>
+          {(mapOffline || tilesFailed) && (
+            <div className="map-offline-banner" role="status">
+              <strong>Map tiles unavailable</strong>
+              <span>
+                {mapOffline
+                  ? 'You’re offline. Pins and filters still work; reconnect for the basemap.'
+                  : 'Couldn’t load map imagery. Check your network — pins remain interactive.'}
+              </span>
+            </div>
+          )}
           <MapContainer
             center={initialCenter}
             zoom={initialZoom}
@@ -574,6 +605,10 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://carto.com/">CARTO</a>'
               url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
               subdomains="abcd"
+              eventHandlers={{
+                tileerror: () => setTilesFailed(true),
+                load: () => setTilesFailed(false),
+              }}
             />
             <ZoomControl position="bottomright" />
             <ScaleControl position="bottomleft" imperial={false} />
@@ -637,14 +672,21 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                         {!isSales && <p>Assigned: {pin.salesperson}</p>}
                         <p>Status: {pin.leadStatus}</p>
                         {isSales ? (
-                          <Link
-                            to={`/sales/checkin/${pin.id}`}
-                            className="btn btn-primary btn-sm"
-                            style={{ marginTop: '0.55rem' }}
-                          >
-                            <MapPinned size={14} style={{ marginRight: 4 }} />
-                            Check in here
-                          </Link>
+                          <div className="actions-row" style={{ marginTop: '0.55rem' }}>
+                            <Link
+                              to={`/sales/checkin/${pin.id}`}
+                              className="btn btn-primary btn-sm"
+                            >
+                              <MapPinned size={14} style={{ marginRight: 4 }} />
+                              Check in here
+                            </Link>
+                            <Link
+                              to={`/sales/architects/${pin.id}`}
+                              className="btn btn-secondary btn-sm"
+                            >
+                              Profile
+                            </Link>
+                          </div>
                         ) : (
                           <Link
                             to={`/admin/architects/${pin.id}`}
@@ -712,12 +754,28 @@ export default function TerritoryMap({ mode, salespersonId }: TerritoryMapProps)
                         : ` · ${selected.region}`}
                     </p>
                     {isSales && selected.kind === 'architect' && (
+                      <div className="actions-row" style={{ marginTop: '0.65rem' }}>
+                        <Link
+                          to={`/sales/checkin/${selected.id}`}
+                          className="btn btn-primary btn-sm"
+                        >
+                          Check in
+                        </Link>
+                        <Link
+                          to={`/sales/architects/${selected.id}`}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          Profile
+                        </Link>
+                      </div>
+                    )}
+                    {!isSales && selected.kind === 'architect' && (
                       <Link
-                        to={`/sales/checkin/${selected.id}`}
+                        to={`/admin/architects/${selected.id}`}
                         className="btn btn-primary btn-sm"
                         style={{ marginTop: '0.65rem' }}
                       >
-                        Check in
+                        Open profile
                       </Link>
                     )}
                   </div>

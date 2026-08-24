@@ -1,18 +1,28 @@
 import { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useData } from '../../context/AppContext';
+import EmptyState from '../../components/EmptyState';
 import {
   formatDateTime,
   getArchitect,
   getSalesperson,
   outcomeClass,
 } from '../../data/helpers';
-import { VISIT_OUTCOMES, salespeople } from '../../data/mockData';
+import { VISIT_OUTCOMES } from '../../data/mockData';
 
 export default function VisitsPage() {
-  const { visits, architects } = useData();
+  const { visits, architects, salespeople } = useData();
+  const [params, setParams] = useSearchParams();
   const [q, setQ] = useState('');
   const [outcome, setOutcome] = useState('all');
-  const [spId, setSpId] = useState('all');
+  const spId = params.get('salesperson') ?? 'all';
+
+  const setSalespersonFilter = (id: string) => {
+    const next = new URLSearchParams(params);
+    if (id === 'all') next.delete('salesperson');
+    else next.set('salesperson', id);
+    setParams(next, { replace: true });
+  };
 
   const rows = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -23,7 +33,7 @@ export default function VisitsPage() {
         if (spId !== 'all' && v.salespersonId !== spId) return false;
         if (!query) return true;
         const arch = architects.find((a) => a.id === v.architectId);
-        const sp = getSalesperson(v.salespersonId);
+        const sp = getSalesperson(v.salespersonId, salespeople);
         return (
           arch?.name.toLowerCase().includes(query) ||
           arch?.firm.toLowerCase().includes(query) ||
@@ -32,7 +42,9 @@ export default function VisitsPage() {
           v.marbleDiscussed?.toLowerCase().includes(query)
         );
       });
-  }, [visits, architects, q, outcome, spId]);
+  }, [visits, architects, salespeople, q, outcome, spId]);
+
+  const filterSp = spId !== 'all' ? getSalesperson(spId, salespeople) : null;
 
   return (
     <div>
@@ -43,6 +55,12 @@ export default function VisitsPage() {
           <p>
             Complete visit history across the sales team — outcomes, notes, and
             marble discussed.
+            {filterSp && (
+              <>
+                {' '}
+                Showing <strong>{filterSp.name}</strong>.
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -62,7 +80,10 @@ export default function VisitsPage() {
             </option>
           ))}
         </select>
-        <select value={spId} onChange={(e) => setSpId(e.target.value)}>
+        <select
+          value={spId}
+          onChange={(e) => setSalespersonFilter(e.target.value)}
+        >
           <option value="all">All salespeople</option>
           {salespeople.map((s) => (
             <option key={s.id} value={s.id}>
@@ -86,16 +107,23 @@ export default function VisitsPage() {
           </thead>
           <tbody>
             {rows.map((v) => {
-              const arch = getArchitect(v.architectId) ??
+              const arch =
+                getArchitect(v.architectId, architects) ??
                 architects.find((a) => a.id === v.architectId);
-              const sp = getSalesperson(v.salespersonId);
+              const sp = getSalesperson(v.salespersonId, salespeople);
               return (
                 <tr key={v.id}>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {formatDateTime(v.date)}
                   </td>
                   <td>
-                    <strong>{arch?.name ?? '—'}</strong>
+                    {arch ? (
+                      <Link to={`/admin/architects/${arch.id}`}>
+                        <strong>{arch.name}</strong>
+                      </Link>
+                    ) : (
+                      <strong>—</strong>
+                    )}
                     <div style={{ fontSize: '0.75rem', color: 'var(--ink-muted)' }}>
                       {arch?.firm}
                     </div>
@@ -114,7 +142,14 @@ export default function VisitsPage() {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6}>
-                  <div className="empty-state">No visits match filters.</div>
+                  <EmptyState
+                    title="No visits match filters"
+                    description="Try clearing the salesperson or outcome filter."
+                    actionLabel={spId !== 'all' ? 'Clear salesperson filter' : undefined}
+                    onAction={
+                      spId !== 'all' ? () => setSalespersonFilter('all') : undefined
+                    }
+                  />
                 </td>
               </tr>
             )}

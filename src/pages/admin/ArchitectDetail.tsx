@@ -1,31 +1,44 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, Phone, Mail } from 'lucide-react';
-import { useData } from '../../context/AppContext';
+import { ArrowLeft, MapPin, MapPinned, Phone, Mail } from 'lucide-react';
+import { useAuth, useData } from '../../context/AppContext';
+import EmptyState from '../../components/EmptyState';
 import {
   formatDate,
   formatDateTime,
   getSalesperson,
   leadStatusClass,
   outcomeClass,
+  phoneHref,
 } from '../../data/helpers';
 
 export default function ArchitectDetailPage() {
   const { id } = useParams();
-  const { architects, visits } = useData();
-  const arch = architects.find((a) => a.id === id);
+  const { user } = useAuth();
+  const { architects, visits, salespeople } = useData();
+  const isSales = user?.role === 'salesperson';
+  const arch = architects.find((a) => {
+    if (a.id !== id) return false;
+    if (isSales) return a.salespersonId === user?.salespersonId;
+    return true;
+  });
   const history = visits
     .filter((v) => v.architectId === id)
     .sort((a, b) => b.date.localeCompare(a.date));
-  const sp = arch ? getSalesperson(arch.salespersonId) : undefined;
+  const sp = arch
+    ? getSalesperson(arch.salespersonId, salespeople)
+    : undefined;
+
+  const listPath = isSales ? '/sales' : '/admin/architects';
+  const listLabel = isSales ? 'My architects' : 'All architects';
 
   if (!arch) {
     return (
-      <div className="empty-state">
-        <p>Architect not found.</p>
-        <Link to="/admin/architects" className="btn btn-secondary">
-          Back to list
-        </Link>
-      </div>
+      <EmptyState
+        title="Architect not found"
+        description="This profile is missing or not assigned to you."
+        actionLabel={listLabel}
+        actionTo={listPath}
+      />
     );
   }
 
@@ -34,12 +47,12 @@ export default function ArchitectDetailPage() {
       <div className="page-header">
         <div>
           <Link
-            to="/admin/architects"
+            to={listPath}
             className="btn btn-secondary btn-sm"
             style={{ marginBottom: '0.75rem' }}
           >
             <ArrowLeft size={14} />
-            All architects
+            {listLabel}
           </Link>
           <div className="eyebrow">Architect profile</div>
           <h1>{arch.name}</h1>
@@ -50,6 +63,12 @@ export default function ArchitectDetailPage() {
             </span>
           </p>
         </div>
+        {isSales && (
+          <Link to={`/sales/checkin/${arch.id}`} className="btn btn-primary">
+            <MapPinned size={16} />
+            Check In
+          </Link>
+        )}
       </div>
 
       <div className="detail-grid">
@@ -63,13 +82,21 @@ export default function ArchitectDetailPage() {
             <span className="k">
               <Phone size={12} style={{ verticalAlign: -1 }} /> Phone
             </span>
-            <span className="v">{arch.phone}</span>
+            <span className="v">
+              <a className="contact-link" href={phoneHref(arch.phone)}>
+                {arch.phone}
+              </a>
+            </span>
           </div>
           <div className="row">
             <span className="k">
               <Mail size={12} style={{ verticalAlign: -1 }} /> Email
             </span>
-            <span className="v">{arch.email}</span>
+            <span className="v">
+              <a className="contact-link" href={`mailto:${arch.email}`}>
+                {arch.email}
+              </a>
+            </span>
           </div>
           <div className="row">
             <span className="k">
@@ -89,12 +116,14 @@ export default function ArchitectDetailPage() {
             <span className="k">Preferred marble</span>
             <span className="v">{arch.preferredMarble ?? '—'}</span>
           </div>
+          {!isSales && (
+            <div className="row">
+              <span className="k">Assigned salesperson</span>
+              <span className="v">{sp?.name ?? '—'}</span>
+            </div>
+          )}
           <div className="row">
-            <span className="k">Assigned salesperson</span>
-            <span className="v">{sp?.name ?? '—'}</span>
-          </div>
-          <div className="row">
-            <span className="k">GPS</span>
+            <span className="k">Coordinates</span>
             <span className="v">
               {arch.lat.toFixed(4)}, {arch.lng.toFixed(4)}
             </span>
@@ -108,7 +137,16 @@ export default function ArchitectDetailPage() {
         <div className="card card-pad">
           <h3 style={{ marginBottom: '1rem' }}>Visit history</h3>
           {history.length === 0 ? (
-            <div className="empty-state">No visits logged yet.</div>
+            <EmptyState
+              title="No visits yet"
+              description={
+                isSales
+                  ? 'Check in at this site to log your first visit.'
+                  : 'No field visits have been logged for this architect.'
+              }
+              actionLabel={isSales ? 'Check In' : undefined}
+              actionTo={isSales ? `/sales/checkin/${arch.id}` : undefined}
+            />
           ) : (
             <div className="timeline">
               {history.map((v) => (

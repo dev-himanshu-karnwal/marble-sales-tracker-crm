@@ -13,17 +13,18 @@ import {
   History,
   X,
 } from 'lucide-react';
-import { useAuth } from '../context/AppContext';
+import { useAuth, useData } from '../context/AppContext';
 import { getSalesperson } from '../data/helpers';
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
+  const { salespeople } = useData();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const sp =
     user?.role === 'salesperson' && user.salespersonId
-      ? getSalesperson(user.salespersonId)
+      ? getSalesperson(user.salespersonId, salespeople)
       : null;
 
   const handleLogout = () => {
@@ -57,7 +58,7 @@ export default function AppLayout() {
       <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
           <div className="mark">DCT Marble</div>
-          <div className="sub">Sales CRM Demo</div>
+          <div className="sub">Field Sales CRM</div>
         </div>
 
         <nav>

@@ -1,13 +1,25 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Building2, Shield, UserRound } from 'lucide-react';
-import { useAuth } from '../context/AppContext';
-import { salespeople } from '../data/mockData';
+import { useAuth, useData } from '../context/AppContext';
+import heroImg from '../assets/hero.png';
 
 export default function LoginPage() {
-  const { loginAdmin, loginSalesperson } = useAuth();
+  const { user, loginAdmin, loginSalesperson } = useAuth();
+  const { salespeople } = useData();
   const navigate = useNavigate();
   const [pickingSales, setPickingSales] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    navigate(user.role === 'admin' ? '/admin' : '/sales', { replace: true });
+  }, [user, navigate]);
+
+  if (user) {
+    return (
+      <Navigate to={user.role === 'admin' ? '/admin' : '/sales'} replace />
+    );
+  }
 
   const enterAdmin = () => {
     loginAdmin();
@@ -22,12 +34,15 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-hero">
+        <div
+          className="login-hero"
+          style={{ backgroundImage: `linear-gradient(160deg, rgba(42, 38, 34, 0.88), rgba(42, 38, 34, 0.55)), url(${heroImg})` }}
+        >
           <div>
             <div className="brand">DCT Marble</div>
             <p>
               Field sales CRM for architects, site visits, and marble leads —
-              demo experience with live mock data.
+              sample workspace with representative field data.
             </p>
           </div>
         </div>
@@ -35,14 +50,14 @@ export default function LoginPage() {
         <div className="login-body">
           <h2>Enter the workspace</h2>
           <p className="lead">
-            Choose a role to explore the demo. No password required.
+            Explore as Admin or Field Sales to walk through the product.
           </p>
 
           <div className="role-cards">
             <button type="button" className="role-card" onClick={enterAdmin}>
               <div className="title">
                 <Shield size={18} color="#b08d57" />
-                Admin
+                Explore as Admin
               </div>
               <div className="desc">
                 Full visibility — dashboards, leaderboard, map, all architects &
@@ -57,7 +72,7 @@ export default function LoginPage() {
             >
               <div className="title">
                 <UserRound size={18} color="#b08d57" />
-                Salesperson
+                Explore as Field Sales
               </div>
               <div className="desc">
                 Manage architects, check in at sites, and log visit outcomes.
@@ -68,7 +83,7 @@ export default function LoginPage() {
           {pickingSales && (
             <div className="sp-picker">
               <p className="lead" style={{ marginBottom: '0.75rem' }}>
-                Select a salesperson persona:
+                Select a salesperson:
               </p>
               <div className="sp-list">
                 {salespeople.map((sp) => (

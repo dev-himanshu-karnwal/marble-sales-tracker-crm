@@ -1,6 +1,6 @@
-# DCT Marble Sales CRM (UI Demo)
+# DCT Marble Field Sales CRM
 
-Web demo of a field sales CRM for a marble manufacturing company. Built with **Vite + React + TypeScript**. All data is hardcoded locally — no backend, auth, Maps API, or GPS.
+Interactive product preview of a field sales CRM for a marble manufacturer. Built with **Vite + React + TypeScript**. Sample data runs fully in the browser — no backend required.
 
 ## Run locally
 
@@ -11,26 +11,27 @@ npm run dev
 
 Open the URL Vite prints (usually `http://localhost:5173`).
 
-## Demo entry
+## Enter the workspace
 
 On the login screen:
 
-- **Admin** — dashboards, leaderboard, static map, all architects & visits
-- **Salesperson** — pick a persona (e.g. Arjun Mehta / Priya Sharma), then manage architects, check in, and log visits
+- **Explore as Admin** — dashboards, leaderboard, interactive territory map, all architects & visits
+- **Explore as Field Sales** — pick a salesperson, manage architects, check in on the map, log visits
 
 ## Screens
 
 | Role | Screens |
 |------|---------|
 | Shared | Role select |
-| Admin | Dashboard, Leaderboard, Map, Architects, Architect detail, Visits log |
-| Sales | My Architects, Add Architect, Check-In, Visit Log, Visit History |
+| Admin | Dashboard, Leaderboard, Map View, Architects, Architect detail, Visits log |
+| Sales | My Architects, My Map, Architect detail, Add Architect, Check-In, Visit Log, Visit History |
 
 ## Stack
 
 - React 19 + Vite 8 + TypeScript
 - React Router
 - Recharts
+- Leaflet + React Leaflet (CARTO / OSM tiles)
 - Lucide icons
 
-Mock data lives in `src/data/mockData.ts` (7 salespeople, 25 architects, 58 visits).
+Sample data lives in `src/data/mockData.ts` (7 salespeople, 25 architects, 58 visits). Architects, visits, and check-ins you create are saved in `localStorage` for the session browser.

@@ -65,6 +65,7 @@ export default function App() {
         <Route index element={<MyArchitectsPage />} />
         <Route path="map" element={<MyMapPage />} />
         <Route path="add" element={<AddArchitectPage />} />
+        <Route path="architects/:id" element={<ArchitectDetailPage />} />
         <Route path="checkin/:id" element={<CheckInPage />} />
         <Route path="visit/:id" element={<VisitLogPage />} />
         <Route path="history" element={<VisitHistoryPage />} />

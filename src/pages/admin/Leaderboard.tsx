@@ -1,9 +1,10 @@
+import { Link } from 'react-router-dom';
 import { useData } from '../../context/AppContext';
 import { badgeClass, getAllLeaderboard } from '../../data/helpers';
 
 export default function LeaderboardPage() {
-  const { architects, visits } = useData();
-  const board = getAllLeaderboard(architects, visits);
+  const { architects, visits, salespeople } = useData();
+  const board = getAllLeaderboard(architects, visits, salespeople);
 
   return (
     <div>
@@ -12,8 +13,8 @@ export default function LeaderboardPage() {
           <div className="eyebrow">Admin</div>
           <h1>Salesperson Leaderboard</h1>
           <p>
-            Ranked by leads generated and conversion rate. Performance badges
-            highlight top performers and those needing coaching.
+            Ranked by leads generated and conversion rate. Open a row to review
+            that person’s visits or architects.
           </p>
         </div>
       </div>
@@ -33,6 +34,21 @@ export default function LeaderboardPage() {
                 </span>
               </h3>
               <div className="region">{row.salesperson.region}</div>
+              <div className="leader-links">
+                <Link
+                  to={`/admin/visits?salesperson=${row.salesperson.id}`}
+                  className="text-link"
+                >
+                  View visits
+                </Link>
+                <span aria-hidden>·</span>
+                <Link
+                  to={`/admin/architects?salesperson=${row.salesperson.id}`}
+                  className="text-link"
+                >
+                  View architects
+                </Link>
+              </div>
             </div>
             <div className="leader-stats">
               <div className="s">

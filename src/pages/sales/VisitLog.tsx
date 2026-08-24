@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth, useData } from '../../context/AppContext';
+import { useToast } from '../../context/ToastContext';
 import { MARBLE_PRODUCTS, VISIT_OUTCOMES } from '../../data/mockData';
 import type { VisitOutcome } from '../../data/types';
 
@@ -14,6 +15,7 @@ export default function VisitLogPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const { architects, addVisit } = useData();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const arch = architects.find(
     (a) => a.id === id && a.salespersonId === user?.salespersonId
@@ -27,10 +29,11 @@ export default function VisitLogPage() {
 
   if (!arch || !user?.salespersonId) {
     return (
-      <div className="empty-state">
-        <p>Architect not found.</p>
-        <Link to="/sales" className="btn btn-secondary">
-          Back
+      <div className="empty-state empty-state-rich">
+        <h3>Architect not found</h3>
+        <p>Return to your list and open a site check-in first.</p>
+        <Link to="/sales" className="btn btn-secondary btn-sm">
+          Back to my architects
         </Link>
       </div>
     );
@@ -38,7 +41,7 @@ export default function VisitLogPage() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    addVisit({
+    const created = addVisit({
       architectId: arch.id,
       salespersonId: user.salespersonId!,
       date: new Date(date).toISOString(),
@@ -47,7 +50,10 @@ export default function VisitLogPage() {
       nextFollowUp: nextFollowUp || undefined,
       marbleDiscussed: marble,
     });
-    navigate('/sales/history');
+    const follow =
+      nextFollowUp ? ` Follow-up set for ${nextFollowUp}.` : '';
+    showToast(`Visit logged — ${outcome}.${follow}`);
+    navigate(`/sales/history?saved=${created.id}`);
   };
 
   return (

@@ -1,19 +1,30 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useData } from '../../context/AppContext';
+import EmptyState from '../../components/EmptyState';
 import { getSalesperson, leadStatusClass } from '../../data/helpers';
 import { REGIONS } from '../../data/mockData';
 
 export default function ArchitectsPage() {
-  const { architects } = useData();
+  const { architects, salespeople } = useData();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const [q, setQ] = useState('');
   const [region, setRegion] = useState('all');
   const [status, setStatus] = useState('all');
+  const spId = params.get('salesperson') ?? 'all';
+
+  const setSalespersonFilter = (id: string) => {
+    const next = new URLSearchParams(params);
+    if (id === 'all') next.delete('salesperson');
+    else next.set('salesperson', id);
+    setParams(next, { replace: true });
+  };
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return architects.filter((a) => {
+      if (spId !== 'all' && a.salespersonId !== spId) return false;
       if (region !== 'all' && a.region !== region) return false;
       if (status !== 'all' && a.leadStatus !== status) return false;
       if (!query) return true;
@@ -24,7 +35,9 @@ export default function ArchitectsPage() {
         a.preferredMarble?.toLowerCase().includes(query)
       );
     });
-  }, [architects, q, region, status]);
+  }, [architects, q, region, status, spId]);
+
+  const filterSp = spId !== 'all' ? getSalesperson(spId, salespeople) : null;
 
   return (
     <div>
@@ -34,6 +47,12 @@ export default function ArchitectsPage() {
           <h1>All Architects</h1>
           <p>
             Search and filter registered architecture firms and project sites.
+            {filterSp && (
+              <>
+                {' '}
+                Filtered to <strong>{filterSp.name}</strong>.
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -58,6 +77,17 @@ export default function ArchitectsPage() {
           {['New', 'Warm', 'Hot', 'Converted', 'Cold'].map((s) => (
             <option key={s} value={s}>
               {s}
+            </option>
+          ))}
+        </select>
+        <select
+          value={spId}
+          onChange={(e) => setSalespersonFilter(e.target.value)}
+        >
+          <option value="all">All salespeople</option>
+          {salespeople.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
             </option>
           ))}
         </select>
@@ -89,7 +119,7 @@ export default function ArchitectsPage() {
                 <td>{a.firm}</td>
                 <td>{a.siteName}</td>
                 <td>{a.region}</td>
-                <td>{getSalesperson(a.salespersonId)?.name ?? '—'}</td>
+                <td>{getSalesperson(a.salespersonId, salespeople)?.name ?? '—'}</td>
                 <td>
                   <span className={`badge ${leadStatusClass(a.leadStatus)}`}>
                     {a.leadStatus}
@@ -101,7 +131,14 @@ export default function ArchitectsPage() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={7}>
-                  <div className="empty-state">No architects match filters.</div>
+                  <EmptyState
+                    title="No architects match filters"
+                    description="Try a different region, lead status, or salesperson."
+                    actionLabel={spId !== 'all' ? 'Clear salesperson filter' : undefined}
+                    onAction={
+                      spId !== 'all' ? () => setSalespersonFilter('all') : undefined
+                    }
+                  />
                 </td>
               </tr>
             )}
