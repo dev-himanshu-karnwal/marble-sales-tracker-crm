@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Building2, Shield, UserRound } from 'lucide-react';
 import { useAuth, useData } from '../context/AppContext';
-import heroImg from '../assets/hero.png';
+
+const HERO_IMG = '/image.png';
 
 export default function LoginPage() {
   const { user, loginAdmin, loginSalesperson } = useAuth();
@@ -36,13 +37,23 @@ export default function LoginPage() {
       <div className="login-card">
         <div
           className="login-hero"
-          style={{ backgroundImage: `linear-gradient(160deg, rgba(42, 38, 34, 0.88), rgba(42, 38, 34, 0.55)), url(${heroImg})` }}
+          style={{
+            backgroundImage: `
+              linear-gradient(
+                180deg,
+                rgba(20, 18, 16, 0.15) 0%,
+                rgba(20, 18, 16, 0.35) 45%,
+                rgba(20, 18, 16, 0.88) 100%
+              ),
+              url(${HERO_IMG})
+            `,
+          }}
         >
           <div>
-            <div className="brand">Jindal Marble</div>
+            <div className="brand">Kamla Marble</div>
             <p>
-              Field sales CRM for architects, site visits, and marble leads —
-              sample workspace with representative field data.
+              Elevate your living experience — field CRM for architects, site
+              visits, and natural stone leads.
             </p>
           </div>
         </div>

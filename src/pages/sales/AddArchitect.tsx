@@ -182,7 +182,7 @@ export default function AddArchitectPage() {
           First referred project site
         </h3>
         <p className="form-section-lead">
-          Only sites where the architect wants Jindal marble — check-ins happen
+          Only sites where the architect wants Kamla marble — check-ins happen
           here (or at the studio).
         </p>
         <div className="form-grid">

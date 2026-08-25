@@ -25,11 +25,11 @@ import type {
 
 /** v2 keys — architect/site split; ignores legacy flat-architect cache */
 const KEYS = {
-  user: 'Jindal-crm-user',
-  architects: 'Jindal-crm-v2-architects',
-  sites: 'Jindal-crm-v2-sites',
-  visits: 'Jindal-crm-v2-visits',
-  salespeople: 'Jindal-crm-v2-salespeople',
+  user: 'Kamla-crm-user',
+  architects: 'Kamla-crm-v2-architects',
+  sites: 'Kamla-crm-v2-sites',
+  visits: 'Kamla-crm-v2-visits',
+  salespeople: 'Kamla-crm-v2-salespeople',
 } as const;
 
 function loadJson<T>(key: string, fallback: T): T {
@@ -205,11 +205,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const fromLocal = loadJson<SessionUser | null>(KEYS.user, null);
     if (fromLocal) return fromLocal;
     try {
-      const legacy = sessionStorage.getItem('Jindal-crm-user');
+      const legacy = sessionStorage.getItem('Kamla-crm-user');
       if (legacy) {
         const parsed = JSON.parse(legacy) as SessionUser;
         saveJson(KEYS.user, parsed);
-        sessionStorage.removeItem('Jindal-crm-user');
+        sessionStorage.removeItem('Kamla-crm-user');
         return parsed;
       }
     } catch {
@@ -222,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
     if (u) saveJson(KEYS.user, u);
     else localStorage.removeItem(KEYS.user);
-    sessionStorage.removeItem('Jindal-crm-user');
+    sessionStorage.removeItem('Kamla-crm-user');
   };
 
   const loginAdmin = () => persist({ role: 'admin' });

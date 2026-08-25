@@ -569,14 +569,15 @@ table.data-table tbody tr.clickable {
 }
 
 .login-hero {
-  background-color: #2a2622;
+  background-color: #1a1816;
   background-size: cover;
-  background-position: center;
+  background-position: center 35%;
+  background-repeat: no-repeat;
   color: #f5f0e8;
   padding: 2.5rem 2.25rem;
   display: flex;
   flex-direction: column;
-  min-height: 280px;
+  min-height: 340px;
   justify-content: flex-end;
 }
 
@@ -1998,7 +1999,8 @@ table.data-table tbody tr.clickable {
   }
 
   .login-hero {
-    min-height: 180px;
+    min-height: 220px;
+    background-position: center 30%;
   }
 }
 

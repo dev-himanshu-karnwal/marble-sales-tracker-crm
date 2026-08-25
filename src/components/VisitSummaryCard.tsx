@@ -28,7 +28,7 @@ export default function VisitSummaryCard({
 
   const handleShare = async () => {
     const text = [
-      `Jindal Marble — Visit summary`,
+      `Kamla Marble — Visit summary`,
       architect ? `${architect.name} · ${place}` : place,
       `Type: ${visit.checkInType === 'office' ? 'Office' : 'Site'}`,
       `Outcome: ${visit.outcome}`,

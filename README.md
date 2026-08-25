@@ -1,4 +1,4 @@
-# Jindal Marble Field Sales CRM
+# Kamla Marble Field Sales CRM
 
 Interactive product preview of a field sales CRM for a marble manufacturer. Built with **Vite + React + TypeScript**. Sample data runs fully in the browser — no backend required.
 

@@ -4,7 +4,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-1',
     name: 'Arjun Mehta',
-    email: 'arjun.mehta@Jindalmarble.in',
+    email: 'arjun.mehta@Kamlamarble.in',
     phone: '+91 98100 11223',
     region: 'Delhi NCR',
     avatarInitials: 'AM',
@@ -19,7 +19,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-2',
     name: 'Priya Sharma',
-    email: 'priya.sharma@Jindalmarble.in',
+    email: 'priya.sharma@Kamlamarble.in',
     phone: '+91 98290 44556',
     region: 'Jaipur',
     avatarInitials: 'PS',
@@ -34,7 +34,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-3',
     name: 'Rohan Kapoor',
-    email: 'rohan.kapoor@Jindalmarble.in',
+    email: 'rohan.kapoor@Kamlamarble.in',
     phone: '+91 98765 33445',
     region: 'Mumbai',
     avatarInitials: 'RK',
@@ -49,7 +49,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-4',
     name: 'Ananya Singh',
-    email: 'ananya.singh@Jindalmarble.in',
+    email: 'ananya.singh@Kamlamarble.in',
     phone: '+91 94140 77889',
     region: 'Kishangarh',
     avatarInitials: 'AS',
@@ -64,7 +64,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-5',
     name: 'Vikram Patel',
-    email: 'vikram.patel@Jindalmarble.in',
+    email: 'vikram.patel@Kamlamarble.in',
     phone: '+91 98250 22334',
     region: 'Ahmedabad',
     avatarInitials: 'VP',
@@ -79,7 +79,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-6',
     name: 'Neha Gupta',
-    email: 'neha.gupta@Jindalmarble.in',
+    email: 'neha.gupta@Kamlamarble.in',
     phone: '+91 98711 55667',
     region: 'Delhi NCR',
     avatarInitials: 'NG',
@@ -94,7 +94,7 @@ export const salespeople: Salesperson[] = [
   {
     id: 'sp-7',
     name: 'Suresh Yadav',
-    email: 'suresh.yadav@Jindalmarble.in',
+    email: 'suresh.yadav@Kamlamarble.in',
     phone: '+91 94133 88990',
     region: 'Jaipur',
     avatarInitials: 'SY',
@@ -935,7 +935,7 @@ export const visits: Visit[] = [
     salespersonId: 'sp-1',
     date: '2026-07-12T09:30:00',
     outcome: 'Sample Given',
-    notes: 'Initial slab selection day at Jindal yard.',
+    notes: 'Initial slab selection day at Kamla yard.',
     marbleDiscussed: 'Calacatta Gold',
     siteId: 'site-7',
     checkInType: 'site'
@@ -1237,7 +1237,7 @@ export const visits: Visit[] = [
     salespersonId: 'sp-4',
     date: '2026-07-30T10:00:00',
     outcome: 'Interested',
-    notes: 'Owner visited Jindal yard in Kishangarh.',
+    notes: 'Owner visited Kamla yard in Kishangarh.',
     marbleDiscussed: 'Indian Green Marble',
     siteId: 'site-17',
     checkInType: 'site'

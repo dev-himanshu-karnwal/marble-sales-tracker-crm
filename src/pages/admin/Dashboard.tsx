@@ -47,7 +47,7 @@ export default function AdminDashboard() {
           <div className="eyebrow">Admin</div>
           <h1>Dashboard</h1>
           <p>
-            Overview of field activity across Jindal Marble sales territories for
+            Overview of field activity across Kamla Marble sales territories for
             August 2026.
           </p>
         </div>
